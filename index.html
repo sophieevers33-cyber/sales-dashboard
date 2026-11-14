@@ -1,0 +1,1774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
+  <meta http-equiv="Pragma" content="no-cache"/>
+  <meta http-equiv="Expires" content="0"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Sophie — Sales Call Analyzer</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{color-scheme:light;}
+button,input,select,textarea,label{color:var(--text);font-family:inherit;}
+.nav-btn,.btn-sm,.btn-reset{color:var(--muted);}
+.btn-fetch{color:var(--accent);}
+.btn-primary{color:#fff;}
+.btn-save{color:var(--success);}
+:root{
+  --bg:#f9f8f6;--surface:#fff;--surface2:#f3f2ef;
+  --border:rgba(0,0,0,0.09);--border-md:rgba(0,0,0,0.16);
+  --text:#1a1a18;--muted:#6b6b66;
+  --accent:#185FA5;--accent-light:#E6F1FB;--accent-mid:#378ADD;
+  --success:#3B6D11;--success-light:#EAF3DE;
+  --warn:#BA7517;--warn-light:#FAEEDA;
+  --danger:#A32D2D;--danger-light:#FCEBEB;
+  --purple:#5B3FA6;--purple-light:#EDE8FB;
+  --radius:8px;--radius-lg:12px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+.nav{background:var(--surface);border-bottom:0.5px solid var(--border-md);padding:0 2rem;display:flex;position:sticky;top:0;z-index:10;}
+.nav-btn{padding:14px 20px;font-size:14px;font-weight:500;border:none;background:none;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;transition:all 0.15s;}
+.nav-btn:hover{color:var(--text);}
+.nav-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
+.page{display:none;max-width:820px;margin:0 auto;padding:2rem 1rem;}
+.page.active{display:block;}
+.card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem 1.5rem;margin-bottom:1rem;}
+.card-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--muted);margin-bottom:12px;}
+.account-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
+.account-btn{border:0.5px solid var(--border-md);border-radius:var(--radius);padding:12px;cursor:pointer;background:var(--surface);text-align:left;transition:all 0.15s;}
+.account-btn:hover{background:var(--surface2);}
+.account-btn.active{border:2px solid var(--accent-mid);background:var(--accent-light);}
+.account-btn .name{font-size:14px;font-weight:500;}
+.account-btn .comm{font-size:12px;color:var(--muted);margin-top:2px;}
+.account-btn.active .name{color:var(--accent);}
+.account-btn.active .comm{color:var(--accent-mid);}
+.type-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.type-btn{border:0.5px solid var(--border-md);border-radius:var(--radius);padding:10px 14px;cursor:pointer;background:var(--surface);text-align:left;transition:all 0.15s;}
+.type-btn:hover{background:var(--surface2);}
+.type-btn.active{border:2px solid var(--accent-mid);background:var(--accent-light);}
+.type-btn .tname{font-size:14px;font-weight:500;}
+.type-btn .tdesc{font-size:12px;color:var(--muted);margin-top:2px;}
+.type-btn.active .tname{color:var(--accent);}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+.field label{font-size:12px;font-weight:500;color:var(--muted);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.05em;}
+.field input,.field textarea,.field select{width:100%;border:0.5px solid var(--border-md);border-radius:var(--radius);padding:9px 12px;font-size:14px;font-family:inherit;color:var(--text);background:var(--surface);transition:border-color 0.15s;}
+.field input:focus,.field textarea:focus,.field select:focus{outline:none;border-color:var(--accent-mid);}
+.field textarea{min-height:200px;resize:vertical;line-height:1.6;}
+.prefix-wrap{position:relative;}
+.prefix{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:14px;pointer-events:none;}
+.prefix-wrap input{padding-left:22px;}
+.field-note{font-size:11px;color:var(--muted);margin-top:5px;line-height:1.5;}
+.field-note a{color:var(--accent);}
+.fathom-row{display:flex;gap:8px;align-items:flex-end;}
+.fathom-row .field{flex:1;}
+.btn-fetch{padding:9px 16px;background:var(--accent-light);color:var(--accent);border:1px solid var(--accent-mid);border-radius:var(--radius);font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;}
+.btn-fetch:disabled{opacity:0.45;cursor:not-allowed;}
+.fathom-meta{display:none;background:var(--accent-light);border:0.5px solid var(--accent-mid);border-radius:var(--radius);padding:10px 14px;margin-top:10px;font-size:13px;}
+.fathom-link{font-size:11px;color:var(--accent-mid);margin-top:6px;word-break:break-all;}
+.fathom-link a{color:var(--accent-mid);}
+.btn-primary{width:100%;padding:13px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-lg);font-size:15px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity 0.15s;margin-bottom:0.5rem;}
+.btn-primary:hover:not(:disabled){opacity:0.85;}
+.btn-primary:disabled{opacity:0.45;cursor:not-allowed;}
+.btn-save{width:100%;padding:12px;background:var(--surface);color:var(--success);border:1px solid #639922;border-radius:var(--radius-lg);font-size:14px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:background 0.15s;}
+.btn-save:hover:not(:disabled){background:var(--success-light);}
+.btn-sm{font-size:12px;padding:5px 12px;border-radius:var(--radius);border:0.5px solid var(--border-md);background:var(--surface);cursor:pointer;color:var(--muted);transition:all 0.15s;}
+.btn-sm:hover{border-color:var(--accent-mid);color:var(--accent);}
+.btn-danger{color:var(--danger);border-color:var(--danger);opacity:0.7;}
+.btn-danger:hover{opacity:1;background:var(--danger-light)!important;color:var(--danger)!important;border-color:var(--danger)!important;}
+.status{font-size:13px;color:var(--muted);text-align:center;padding:8px 0;min-height:36px;}
+.status.error{color:var(--danger);}
+.status.success{color:var(--success);}
+.divider{height:0.5px;background:var(--border);margin:1.5rem 0;}
+.stat{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;text-align:center;}
+.stat-label{font-size:11px;color:var(--muted);margin-bottom:4px;}
+.stat-val{font-size:26px;font-weight:600;}
+.score-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:1rem;}
+.score-card{background:var(--surface2);border-radius:var(--radius);padding:10px 12px;}
+.score-lbl{font-size:11px;color:var(--muted);margin-bottom:4px;}
+.score-num{font-size:20px;font-weight:600;}
+.score-num.hi{color:var(--success);}.score-num.md{color:var(--warn);}.score-num.lo{color:var(--danger);}
+.bar{height:4px;background:var(--border-md);border-radius:2px;margin-top:5px;}
+.bar-inner{height:4px;border-radius:2px;}
+.bar-inner.hi{background:#639922;}.bar-inner.md{background:#EF9F27;}.bar-inner.lo{background:#E24B4A;}
+.phase-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:1rem;}
+.phase-card{background:var(--surface2);border-radius:var(--radius);padding:8px;text-align:center;}
+.phase-lbl{font-size:10px;color:var(--muted);margin-bottom:3px;}
+.phase-val{font-size:18px;font-weight:600;}
+.phase-unit{font-size:10px;color:var(--muted);}
+.feedback-box{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;font-size:14px;line-height:1.75;margin-bottom:1rem;}
+.section-title{font-size:14px;font-weight:500;margin-bottom:10px;}
+.dash-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;}
+.dash-header h2{font-size:20px;font-weight:600;}
+.kpi-grid{display:grid;gap:10px;margin-bottom:1rem;}
+.kpi{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:14px;display:flex;flex-direction:column;}
+.kpi-label{font-size:11px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.05em;min-height:28px;display:flex;align-items:flex-end;}
+.kpi-val{font-size:22px;font-weight:600;color:var(--accent);}
+.kpi-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+.revenue-section{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem 1.5rem;margin-bottom:1rem;}
+.revenue-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:12px;}
+.installment-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:0.5px solid var(--border);font-size:13px;}
+.installment-row:last-child{border-bottom:none;}
+.inst-month{color:var(--muted);min-width:80px;}
+.inst-amount{font-weight:500;}
+.inst-badge{font-size:11px;padding:2px 8px;border-radius:20px;}
+.inst-collected{background:var(--success-light);color:var(--success);}
+.inst-projected{background:var(--purple-light);color:var(--purple);}
+.filters-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:1rem;}
+.filters-row{display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr auto;gap:8px;align-items:flex-end;}
+.filter-field label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:5px;}
+.filter-field input,.filter-field select{width:100%;border:0.5px solid var(--border-md);border-radius:var(--radius);padding:7px 10px;font-size:13px;font-family:inherit;color:var(--text);background:var(--surface);}
+.btn-reset{padding:7px 14px;font-size:13px;border-radius:var(--radius);border:0.5px solid var(--border-md);background:var(--surface2);cursor:pointer;color:var(--muted);}
+.calls-table{width:100%;border-collapse:collapse;font-size:13px;}
+.calls-table th{text-align:left;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;padding:8px 12px;border-bottom:0.5px solid var(--border-md);white-space:nowrap;}
+.calls-table td{padding:10px 12px;border-bottom:0.5px solid var(--border);vertical-align:middle;}
+.calls-table tr:last-child td{border-bottom:none;}
+.calls-table tbody tr{cursor:pointer;transition:background 0.1s;}
+.calls-table tbody tr:hover td{background:var(--surface2);}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500;}
+.badge-closed{background:var(--success-light);color:var(--success);}
+.badge-no{background:var(--danger-light);color:var(--danger);}
+.badge-follow{background:var(--warn-light);color:var(--warn);}
+.badge-unknown{background:var(--surface2);color:var(--muted);}
+.badge-rescored{background:#e6f4ea;color:#2d7a3a;font-size:11px;padding:2px 6px;border-radius:4px;}
+.badge-unscored{background:#fff3cd;color:#856404;font-size:11px;padding:2px 6px;border-radius:4px;}
+.badge-pitched{background:var(--accent-light);color:var(--accent);}
+.badge-fdq{background:var(--surface2);color:var(--muted);}
+.empty-state{text-align:center;padding:3rem 1rem;color:var(--muted);font-size:14px;}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:100;align-items:flex-start;justify-content:center;padding:2rem 1rem;overflow-y:auto;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--surface);border-radius:var(--radius-lg);max-width:700px;width:100%;padding:1.5rem;position:relative;margin:auto;}
+.modal-close{position:absolute;top:1rem;right:1rem;background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);}
+.modal-section{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin:1rem 0 8px;}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;}
+.spinner-sm{border-color:rgba(24,95,165,0.25);border-top-color:var(--accent);}
+@keyframes spin{to{transform:rotate(360deg);}}
+#results{display:none;}
+</style>
+</head>
+<body>
+<div class="nav">
+  <button class="nav-btn active" onclick="showPage('analyzer',this)">Analyze</button>
+  <button class="nav-btn" onclick="showPage('dashboard',this)">Dashboard</button>
+  <span id="cloud-status" style="margin-left:auto;align-self:center;font-size:12px;color:var(--muted)">Connecting…</span>
+</div>
+
+<!-- ANALYZER -->
+<div class="page active" id="page-analyzer">
+  <div class="card">
+    <div class="card-title">Account</div>
+    <div class="account-grid" style="grid-template-columns:repeat(3,1fr)">
+      <button class="account-btn active" onclick="selectAccount(this,'Sales Queens',10)"><div class="name">Sales Queens</div><div class="comm">10% of cash collected</div></button>
+      <button class="account-btn" onclick="selectAccount(this,'Content Queendom (UGC)',10)"><div class="name">Content Queendom (UGC)</div><div class="comm">10% of cash collected</div></button>
+      <button class="account-btn" onclick="selectAccount(this,'Limitless Coaching Fitness',10)"><div class="name">Limitless Coaching Fitness</div><div class="comm">10% of cash collected</div></button>
+    </div>
+    <p class="field-note">Commission is paid on cash collected. Any contracted revenue not yet collected is projected into the following months as installments come in.</p>
+  </div>
+  <div class="card">
+    <div class="card-title">Call type</div>
+    <div class="type-grid">
+      <button class="type-btn active" onclick="selectType(this,'pitched')"><div class="tname">Pitched</div><div class="tdesc">Discovery + pitch + close attempt</div></button>
+      <button class="type-btn" onclick="selectType(this,'not_pitched')"><div class="tname">Not Pitched</div><div class="tdesc">Call happened, no pitch made</div></button>
+      <button class="type-btn" onclick="selectType(this,'fdq')"><div class="tname">FDQ</div><div class="tdesc">Pitched but prospect not qualified</div></button>
+      <button class="type-btn" onclick="selectType(this,'no_show')"><div class="tname">No Show</div><div class="tdesc">Prospect didn't show up</div></button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Fathom recording (optional)</div>
+    <div class="fathom-row">
+      <div class="field"><input type="url" id="fathom-url" placeholder="https://fathom.video/share/..." oninput="onFathomInput()"/></div>
+      <button class="btn-fetch" id="btn-fetch" onclick="fetchFathom()" disabled>Fetch metadata</button>
+    </div>
+    <div id="fathom-meta" class="fathom-meta"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Call details</div>
+    <div class="row3" style="margin-bottom:10px">
+      <div class="field"><label>Closer name</label><input type="text" id="closer" placeholder="Auto-detected"/></div>
+      <div class="field"><label>Client / prospect</label><input type="text" id="client" placeholder="Auto-detected"/></div>
+      <div class="field"><label>Call date</label><input type="date" id="call-date"/></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Refund amount</label><div class="prefix-wrap"><span class="prefix">$</span><input type="number" id="refund" placeholder="0" min="0"/></div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Anthropic API key</div>
+    <div class="field"><input type="password" id="api-key" placeholder="sk-ant-..." oninput="saveApiKey()"/></div>
+    <p class="field-note">Remembered in this browser, so you only paste it once. Get one at <a href="https://platform.claude.com/settings/keys" target="_blank">platform.claude.com/settings/keys</a>. If the key can't be used here, analysis runs through your Claude account instead.</p>
+  </div>
+  <div class="card">
+    <div class="card-title">Call transcript</div>
+    <div class="field"><textarea id="transcript" placeholder="Paste the full call transcript here..."></textarea></div>
+  </div>
+  <button class="btn-primary" id="btn-analyze" onclick="runAnalysis()">▶ Analyze transcript</button>
+  <div class="status" id="status"></div>
+  <div id="results">
+    <div class="divider"></div>
+    <div class="section-title">Overall performance</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1rem" id="r-overall-grid"></div>
+    <div class="section-title">Score breakdown</div>
+    <div class="score-grid" id="score-grid"></div>
+    <div class="section-title">Phase durations</div>
+    <div class="phase-grid" id="phase-grid"></div>
+    <div class="section-title">Coaching feedback</div>
+    <div class="feedback-box" id="feedback"></div>
+    <button class="btn-save" onclick="saveCall()">✓ Save to dashboard</button>
+    <div class="status" id="save-status"></div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="page" id="page-dashboard">
+  <div class="dash-header">
+    <h2>Dashboard</h2>
+    <div style="display:flex;gap:6px">
+      <button class="btn-sm" onclick="rescoreAll()">Re-score all</button>
+      <button class="btn-sm" onclick="openNoShowModal()">+ Log no-show</button>
+      <button class="btn-sm" onclick="openAdjModal()">+ Add bonus/payment</button>
+      <button class="btn-sm" id="btn-rescore-selected" onclick="rescoreSelected()">Re-score selected (0)</button>
+      <button class="btn-sm" onclick="cleanDuplicates()">Remove duplicates</button>
+      <button class="btn-sm" onclick="exportData()">↓ Export</button>
+      <label class="btn-sm" style="cursor:pointer;margin:0">↑ Import<input type="file" accept=".json" id="import-input" onchange="importData(event)" style="display:none"/></label>
+      <button class="btn-sm btn-danger" onclick="clearAll()">Clear all</button>
+    </div>
+  </div>
+  <!-- Filters -->
+  <div class="filters-card">
+    <div class="filters-row">
+      <div class="filter-field"><label>Account</label>
+        <select id="f-account" onchange="renderDashboard()">
+          <option value="">All accounts</option>
+          <option>Sales Queens</option><option>Content Queendom (UGC)</option><option>Limitless Coaching Fitness</option>
+        </select>
+      </div>
+      <div class="filter-field"><label>Call type</label>
+        <select id="f-type" onchange="renderDashboard()">
+          <option value="">All types</option>
+          <option value="pitched">Pitched</option>
+          <option value="not_pitched">Not Pitched</option>
+          <option value="fdq">FDQ</option>
+          <option value="no_show">No Show</option>
+        </select>
+      </div>
+      <div class="filter-field"><label>Client</label><input type="text" id="f-client" placeholder="Search..." oninput="renderDashboard()"/></div>
+      <div class="filter-field"><label>From</label><input type="date" id="f-date-from" onchange="renderDashboard()"/></div>
+      <div class="filter-field"><label>To</label><input type="date" id="f-date-to" onchange="renderDashboard()"/></div>
+      <button class="btn-reset" onclick="resetFilters()">Reset</button>
+    </div>
+  </div>
+  <!-- Row 1: Revenue -->
+  <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr)">
+    <div class="kpi"><div class="kpi-label">Cash collected (period)</div><div class="kpi-val" id="kpi-cash-period" style="color:var(--success)">$0</div></div>
+    <div class="kpi"><div class="kpi-label">Cash collected (prev months)</div><div class="kpi-val" id="kpi-cash-passive" style="color:var(--purple)">$0</div></div>
+    <div class="kpi"><div class="kpi-label">Commission (period)</div><div class="kpi-val" id="kpi-comm-period" style="color:var(--success)">$0</div></div>
+    <div class="kpi"><div class="kpi-label">Revenue generated</div><div class="kpi-val" id="kpi-generated">$0</div><div class="kpi-sub">total contract value</div></div>
+  </div>
+  <!-- Row 2: Call counts -->
+  <div class="kpi-grid" style="grid-template-columns:repeat(6,1fr)">
+    <div class="kpi"><div class="kpi-label">Calls booked</div><div class="kpi-val" id="kpi-booked">0</div></div>
+    <div class="kpi"><div class="kpi-label">Calls taken</div><div class="kpi-val" id="kpi-taken">0</div></div>
+    <div class="kpi"><div class="kpi-label">Calls pitched</div><div class="kpi-val" id="kpi-pitched-count">0</div></div>
+    <div class="kpi"><div class="kpi-label">Calls closed</div><div class="kpi-val" id="kpi-closed-count" style="color:var(--success)">0</div></div>
+    <div class="kpi"><div class="kpi-label">Calls FDQ</div><div class="kpi-val" id="kpi-fdq-count">0</div></div>
+    <div class="kpi"><div class="kpi-label">Avg calls / day</div><div class="kpi-val" id="kpi-avg-day">—</div><div class="kpi-sub" id="kpi-avg-day-sub"></div></div>
+  </div>
+  <!-- Row 3: Close rates -->
+  <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr)">
+    <div class="kpi"><div class="kpi-label">Close rate (all booked)</div><div class="kpi-val" id="kpi-cr-booked">—</div><div class="kpi-sub" id="kpi-cr-booked-sub"></div></div>
+    <div class="kpi"><div class="kpi-label">Close rate (showed)</div><div class="kpi-val" id="kpi-cr-showed">—</div><div class="kpi-sub" id="kpi-cr-showed-sub"></div></div>
+    <div class="kpi"><div class="kpi-label">Close rate (pitched incl. FDQ)</div><div class="kpi-val" id="kpi-cr-pitched-all">—</div><div class="kpi-sub" id="kpi-cr-pitched-all-sub"></div></div>
+    <div class="kpi"><div class="kpi-label">Close rate (pitched excl. FDQ)</div><div class="kpi-val" id="kpi-cr-pitched-excl">—</div><div class="kpi-sub" id="kpi-cr-pitched-excl-sub"></div></div>
+  </div>
+  <!-- Row 4: Per-call efficiency -->
+  <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr)">
+    <div class="kpi"><div class="kpi-label">Revenue / booked call</div><div class="kpi-val" id="kpi-rev-per-booked">—</div></div>
+    <div class="kpi"><div class="kpi-label">Revenue / call taken</div><div class="kpi-val" id="kpi-rev-per-taken">—</div></div>
+    <div class="kpi"><div class="kpi-label">Cash collected / booked call</div><div class="kpi-val" id="kpi-cash-per-booked" style="color:var(--success)">—</div></div>
+    <div class="kpi"><div class="kpi-label">Cash collected / call taken</div><div class="kpi-val" id="kpi-cash-per-taken" style="color:var(--success)">—</div></div>
+  </div>
+  <!-- Coaching synthesis -->
+  <div class="card" id="synth-section" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div class="card-title" style="margin:0">Coaching synthesis</div>
+      <button class="btn-fetch" id="btn-synth" onclick="synthesizeFeedback()">Generate insights</button>
+    </div>
+    <div id="synth-content" style="font-size:13px;color:var(--muted);padding:8px 0">Click "Generate insights" to synthesize top strengths and improvements across the filtered calls.</div>
+  </div>
+  <!-- Avg scores -->
+  <div class="card" id="agg-section" style="display:none">
+    <div class="card-title">Avg score breakdown</div>
+    <div class="score-grid" id="agg-scores"></div>
+    <div class="card-title" style="margin-top:1rem">Avg phase durations</div>
+    <div class="phase-grid" id="agg-phases"></div>
+  </div>
+  <!-- Calls table -->
+  <div class="card" style="padding:0;overflow:hidden"><div id="calls-list"></div></div>
+  <!-- Objections ranking -->
+  <div class="card" id="objections-section" style="margin-top:1rem">
+    <div style="font-size:12px;font-weight:700;letter-spacing:.07em;color:var(--muted);margin-bottom:1rem">OBJECTION RANKING</div>
+    <div id="objections-list"></div>
+  </div>
+  <!-- Recurring payments table -->
+  <div class="card" id="recurring-section" style="display:none;margin-top:1rem">
+    <div style="font-size:12px;font-weight:700;letter-spacing:.07em;color:var(--muted);margin-bottom:1rem">RECURRING PAYMENTS</div>
+    <div id="recurring-list"></div>
+  </div>
+  <!-- Manual bonuses / adjustments -->
+  <div class="card" id="adj-section" style="display:none;margin-top:1rem">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+      <div style="font-size:12px;font-weight:700;letter-spacing:.07em;color:var(--muted)">BONUSES & MANUAL PAYMENTS</div>
+      <button class="btn-sm" onclick="openAdjModal()">+ Add</button>
+    </div>
+    <div id="adj-list"></div>
+  </div>
+</div>
+
+<!-- NO-SHOW MODAL -->
+<div class="modal-overlay" id="noshowModal" onclick="if(event.target.id==='noshowModal')closeNoShowModal()">
+  <div class="modal" style="max-width:420px">
+    <button class="modal-close" onclick="closeNoShowModal()">✕</button>
+    <div style="font-size:17px;font-weight:600;margin-bottom:1rem">Log no-show</div>
+    <div style="display:grid;gap:10px">
+      <div><label style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">DATE</label>
+        <input type="date" id="ns-date" class="form-input" style="width:100%"/></div>
+      <div><label style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">ACCOUNT</label>
+        <select id="ns-account" class="form-input" style="width:100%">
+          <option value="Sales Queens">Sales Queens</option>
+          <option value="Content Queendom (UGC)">Content Queendom (UGC)</option>
+          <option value="Limitless Coaching Fitness">Limitless Coaching Fitness</option>
+        </select></div>
+      <div><label style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">CLIENT NAME (optional)</label>
+        <input type="text" id="ns-client" class="form-input" placeholder="e.g. John Smith" style="width:100%"/></div>
+      <div><label style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">CLOSER</label>
+        <input type="text" id="ns-closer" class="form-input" value="Sophie Evers" style="width:100%"/></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:1.2rem;justify-content:flex-end">
+      <button class="btn-sm" onclick="closeNoShowModal()">Cancel</button>
+      <button class="btn-fetch" onclick="saveNoShow()">Save no-show</button>
+    </div>
+  </div>
+</div>
+
+<!-- MANUAL ADJUSTMENT MODAL (bonuses, extra payments, clawbacks not tied to a call) -->
+<div class="modal-overlay" id="adjModal" onclick="if(event.target.id==='adjModal')closeAdjModal()">
+  <div class="modal" style="max-width:420px">
+    <button class="modal-close" onclick="closeAdjModal()">✕</button>
+    <div style="font-size:17px;font-weight:600;margin-bottom:4px" id="adj-modal-title">Add bonus / manual payment</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:1rem">For money that isn't tied to a specific call — bonuses, one-off payouts, corrections. Use a negative amount for a clawback/deduction.</div>
+    <div style="display:grid;gap:10px">
+      <input type="hidden" id="adj-id" value=""/>
+      <div><label style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">DATE</label>
+        <input type="date" id="adj-date" class="form-input" style="width:100%"/></div>
+      <div><label style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">DESCRIPTION</label>
+        <input type="text" id="adj-label" class="form-input" placeholder="e.g. Q2 performance bonus" style="width:100%"/></div>
+      <div><label style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">ACCOUNT (optional)</label>
+        <select id="adj-account" class="form-input" style="width:100%">
+          <option value="">— Not account-specific —</option>
+          <option value="Sales Queens">Sales Queens</option>
+          <option value="Content Queendom (UGC)">Content Queendom (UGC)</option>
+          <option value="Limitless Coaching Fitness">Limitless Coaching Fitness</option>
+        </select></div>
+      <div><label style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">AMOUNT ($)</label>
+        <input type="number" id="adj-amount" class="form-input" placeholder="500" step="0.01" style="width:100%"/></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:1.2rem;justify-content:flex-end">
+      <button class="btn-sm" onclick="closeAdjModal()">Cancel</button>
+      <button class="btn-fetch" onclick="saveAdjustment()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal" onclick="closeModalOverlay(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="document.getElementById('modal').classList.remove('open')">✕</button>
+    <div style="font-size:17px;font-weight:600;margin-bottom:4px" id="m-title"></div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:6px" id="m-meta"></div>
+    <div style="font-size:12px;margin-bottom:1rem" id="m-fathom"></div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1rem" id="m-overall"></div>
+    <div class="modal-section">Score breakdown</div>
+    <div class="score-grid" id="m-scores"></div>
+    <div style="margin-top:8px"><button class="btn-sm" onclick="reanalyzeCall()">Re-analyze with current rubric</button> <span id="m-reanalyze-status" style="font-size:12px;color:var(--muted);margin-left:8px"></span></div>
+    <div class="modal-section">Phase durations</div>
+    <div class="phase-grid" id="m-phases"></div>
+    <div class="modal-section">Coaching feedback</div>
+    <div class="feedback-box" id="m-feedback"></div>
+    <div class="modal-section">Stored transcript <span id="m-transcript-status" style="font-weight:400;color:var(--muted);text-transform:none;letter-spacing:0;font-size:12px"></span></div>
+    <div id="m-transcript-box" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px;max-height:0;overflow:hidden;transition:max-height 0.2s;font-size:12px;line-height:1.5;white-space:pre-wrap;color:var(--text)"></div>
+    <button class="btn-sm" id="m-transcript-toggle" onclick="toggleTranscriptView()" style="margin-top:6px">Show transcript</button>
+    <div class="modal-section">Update call</div>
+    <div class="row3" style="margin-bottom:8px">
+      <div class="field"><label>Outcome</label>
+        <select id="m-outcome">
+          <option value="closed">Closed</option>
+          <option value="no_close">No close</option>
+          <option value="follow_up">Follow up</option>
+          <option value="fdq">FDQ</option>
+          <option value="unknown">Unknown</option>
+        </select>
+      </div>
+      <div class="field"><label>Call date</label><input type="date" id="m-call-date"/></div>
+      <div class="field"><label>Date closed</label><input type="date" id="m-date-closed"/></div>
+    </div>
+    <div class="row3" style="margin-bottom:8px">
+      <div class="field"><label>Cash collected</label><div class="prefix-wrap"><span class="prefix">$</span><input type="number" id="m-cash" placeholder="0" min="0"/></div></div>
+      <div class="field"><label>Revenue generated</label><div class="prefix-wrap"><span class="prefix">$</span><input type="number" id="m-revenue" placeholder="0" min="0"/></div></div>
+      <div class="field"><label>Installments</label><input type="number" id="m-installments" placeholder="1" min="1"/></div>
+    </div>
+    <div class="row2" style="margin-bottom:8px">
+      <div class="field"><label>Refund</label><div class="prefix-wrap"><span class="prefix">$</span><input type="number" id="m-refund" placeholder="0" min="0"/></div></div>
+      <div class="field"><label>Commission %</label><input type="number" id="m-comm" placeholder="10" min="0" step="0.001"/><span style="font-size:11px;color:var(--muted)">Overrides the rate on this call only</span></div>
+    </div>
+    <button class="btn-save" style="margin-bottom:8px" onclick="updateCall()">Save updates</button>
+    <div class="status" id="m-status"></div>
+    <button class="btn-sm btn-danger" onclick="deleteCall()">Delete this call</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="uiDialog" style="z-index:200">
+  <div class="modal" style="max-width:440px">
+    <div id="ui-msg" style="font-size:14px;line-height:1.6;white-space:pre-wrap;margin-bottom:1.2rem"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn-sm" id="ui-cancel">Cancel</button>
+      <button class="btn-fetch" id="ui-ok">OK</button>
+    </div>
+  </div>
+</div>
+<script>
+function uiDialog(msg,withCancel){
+  return new Promise(function(res){
+    var o=document.getElementById('uiDialog');
+    document.getElementById('ui-msg').textContent=msg;
+    var c=document.getElementById('ui-cancel'),k=document.getElementById('ui-ok');
+    c.style.display=withCancel?'':'none';
+    function done(v){o.classList.remove('open');c.onclick=null;k.onclick=null;res(v);}
+    c.onclick=function(){done(false);}; k.onclick=function(){done(true);};
+    o.classList.add('open');
+  });
+}
+function uiConfirm(m){return uiDialog(m,true);}
+function uiAlert(m){return uiDialog(m,false);}
+const STORAGE_KEY = 'sales_calls';
+// Migrate from old versioned keys
+(function(){
+  try{
+    // Migrate from old versioned keys
+    var current=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
+    if(!current.length){
+      for(var k of['sales_calls_v1','sales_calls_v2','sales_calls_v3']){
+        var d=JSON.parse(localStorage.getItem(k)||'[]');
+        if(d.length){localStorage.setItem(STORAGE_KEY,JSON.stringify(d));current=d;break;}
+      }
+    }
+    // Always migrate old score keys to new ones
+    var scoreMap={discovery_spin:'discovery_depth',discovery_nepq:'discovery_depth',closing:'closing_strength',eq:'eq_in_closing',ifs_awareness:null};
+    var calls=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
+    var changed=false;
+    calls.forEach(function(c){
+      if(!c.scores) return;
+      Object.keys(scoreMap).forEach(function(oldKey){
+        if(c.scores[oldKey]!==undefined){
+          var newKey=scoreMap[oldKey];
+          if(newKey&&!c.scores[newKey]) c.scores[newKey]=c.scores[oldKey];
+          delete c.scores[oldKey];
+          changed=true;
+        }
+      });
+    });
+    if(changed) localStorage.setItem(STORAGE_KEY,JSON.stringify(calls));
+    // Migrate 0-100 scores to 0-10
+    var calls2=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
+    var changed2=false;
+    calls2.forEach(function(c){
+      if(!c.scores) return;
+      Object.values(c.scores).forEach(function(v,i){
+        var k=Object.keys(c.scores)[i];
+        if(c.scores[k]>10){c.scores[k]=Math.round(c.scores[k]/10);changed2=true;}
+      });
+    });
+    if(changed2) localStorage.setItem(STORAGE_KEY,JSON.stringify(calls2));
+  }catch(e){}
+})();
+
+var SCORE_KEYS=['call_control','discovery_depth','belief_shifting','objection_handling','pitch_effectiveness','closing_strength'];
+var EQ_KEY='eq_in_closing';
+var SCORE_LABELS={call_control:'Call control',discovery_depth:'Discovery depth',belief_shifting:'Belief shifting',objection_handling:'Objection handling',pitch_effectiveness:'Pitch effectiveness',closing_strength:'Closing strength'};
+var PHASE_KEYS=['opener','discovery','pitch','objection_handling','close'];
+var PHASE_LABELS={opener:'Opener',discovery:'Discovery',pitch:'Pitch',objection_handling:'Objections',close:'Close'};
+var account='Sales Queens', comm=10, callType='pitched', currentResult=null, openCallId=null, fathomData=null;
+var fabienProgram='other';
+var STRIPE_FACTOR=1-0.033; // 3.3% Stripe fee deducted before commission on Fabien Dating
+var FABIEN_RATES={other:15,'2week':30};
+// Flat-fee offer tiers: total commission is a fixed dollar amount for a specific offer price
+// (already the final number to be paid, so no Stripe factor is applied on top of it)
+var FABIEN_FLAT={'3000offer':{price:3000,commission:422}};
+var csProgram='standard';
+var CS_FLAT={standard:{price:100,commission:15},'2400':{price:2400,commission:400},'3200':{price:3200,commission:500}};
+var selectedCallIds=new Set();
+function toggleCallSelect(id,checked){
+  if(checked) selectedCallIds.add(id); else selectedCallIds.delete(id);
+  var btn=document.getElementById('btn-rescore-selected');
+  if(btn) btn.textContent='Re-score selected ('+selectedCallIds.size+')';
+}
+
+document.addEventListener('DOMContentLoaded',function(){
+  var d=document.getElementById('call-date');
+  if(d) d.value=new Date().toISOString().substring(0,10);
+  var elOther=document.getElementById('fabien-prog-other');
+  if(elOther) elOther.classList.add('active');
+  var elCsStd=document.getElementById('cs-prog-standard');
+  if(elCsStd) elCsStd.classList.add('active');
+});
+
+function showPage(id,btn){
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
+  document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});
+  document.getElementById('page-'+id).classList.add('active');
+  btn.classList.add('active');
+  if(id==='dashboard') renderDashboard();
+}
+function selectAccount(el,name,c){
+  document.querySelectorAll('.account-btn').forEach(function(b){b.classList.remove('active');});
+  el.classList.add('active'); account=name; comm=c;
+}
+function selectFabienProgram(prog){
+  fabienProgram=prog;
+  if(FABIEN_FLAT[prog]){
+    var f=FABIEN_FLAT[prog];
+    comm=Math.round((f.commission/f.price*100)*1000)/1000;
+  } else {
+    comm=Math.round(FABIEN_RATES[prog]*STRIPE_FACTOR*1000)/1000;
+  }
+  var elOther=document.getElementById('fabien-prog-other'), el2wk=document.getElementById('fabien-prog-2week'), el3000=document.getElementById('fabien-prog-3000');
+  if(elOther) elOther.classList.toggle('active',prog==='other');
+  if(el2wk) el2wk.classList.toggle('active',prog==='2week');
+  if(el3000) el3000.classList.toggle('active',prog==='3000offer');
+}
+function selectCSProgram(prog){
+  csProgram=prog;
+  var f=CS_FLAT[prog];
+  comm=Math.round((f.commission/f.price*100)*1000)/1000;
+  var elStd=document.getElementById('cs-prog-standard'), el2400=document.getElementById('cs-prog-2400'), el3200=document.getElementById('cs-prog-3200');
+  if(elStd) elStd.classList.toggle('active',prog==='standard');
+  if(el2400) el2400.classList.toggle('active',prog==='2400');
+  if(el3200) el3200.classList.toggle('active',prog==='3200');
+}
+function selectType(el,type){
+  document.querySelectorAll('.type-btn').forEach(function(b){b.classList.remove('active');});
+  el.classList.add('active'); callType=type;
+}
+
+// FATHOM
+function onFathomInput(){
+  var val=document.getElementById('fathom-url').value.trim();
+  document.getElementById('btn-fetch').disabled=!val.includes('fathom.video');
+  if(!val){document.getElementById('fathom-meta').style.display='none';fathomData=null;}
+}
+async function fetchFathom(){
+  var url=document.getElementById('fathom-url').value.trim();
+  if(!url) return;
+  var btn=document.getElementById('btn-fetch');
+  btn.disabled=true; btn.innerHTML='...';
+  try{
+    var resp=await fetch('https://api.allorigins.win/get?url='+encodeURIComponent(url));
+    var data=await resp.json();
+    var html=data.contents||'';
+    var ogTitle=html.match(/<meta[^>]*property=["']og:title["'][^>]*content=["']([^"']+)["']/i);
+    var titleMatch=html.match(/<title[^>]*>([^<]+)<\/title>/i);
+    var ogDate=html.match(/\b(\d{4}-\d{2}-\d{2})\b/);
+    var attendeeMatch=html.match(/attendee[s]?[^:]*:\s*([^\n<]{5,80})/i);
+    fathomData={url:url,title:((ogTitle&&ogTitle[1])||(titleMatch&&titleMatch[1])||'').replace(' | Fathom','').trim(),date:ogDate?ogDate[1]:'',attendees:attendeeMatch?attendeeMatch[1].trim():''};
+    if(fathomData.attendees&&!document.getElementById('client').value.trim()) document.getElementById('client').value=fathomData.attendees;
+    if(fathomData.date) document.getElementById('call-date').value=fathomData.date;
+    var m=document.getElementById('fathom-meta');
+    m.style.display='block';
+    m.innerHTML=(fathomData.title?'<div><b>Meeting:</b> '+fathomData.title+'</div>':'')+(fathomData.date?'<div><b>Date:</b> '+fathomData.date+'</div>':'')+(fathomData.attendees?'<div><b>Attendees:</b> '+fathomData.attendees+'</div>':'')+'<div class="fathom-link"><a href="'+url+'" target="_blank">'+url+'</a></div>';
+  }catch(e){
+    fathomData={url:url,title:'',date:'',attendees:''};
+    var m=document.getElementById('fathom-meta');
+    m.style.display='block';
+    m.innerHTML='<span style="color:var(--warn)">Link saved (fetch blocked)</span><div class="fathom-link"><a href="'+url+'" target="_blank">'+url+'</a></div>';
+  }
+  btn.disabled=false; btn.innerHTML='Fetch metadata';
+}
+
+// STORAGE
+// STORAGE — saved to your Claude account (private to you), with this browser as a backup copy
+var ADJ_STORAGE_KEY='sales_adjustments';
+var MEM={calls:null,adj:null};
+var CLOUD={col:null,synced:{},chain:Promise.resolve()};
+function lsGet(k){try{return localStorage.getItem(k);}catch(e){return null;}}
+function lsSet(k,v){try{localStorage.setItem(k,v);}catch(e){}}
+function loadCalls(){if(MEM.calls===null){try{MEM.calls=JSON.parse(lsGet(STORAGE_KEY)||'[]');}catch(e){MEM.calls=[];}}return JSON.parse(JSON.stringify(MEM.calls));}
+function saveCalls(c){MEM.calls=JSON.parse(JSON.stringify(c));lsSet(STORAGE_KEY,JSON.stringify(c));queueSync();}
+function loadAdjustments(){if(MEM.adj===null){try{MEM.adj=JSON.parse(lsGet(ADJ_STORAGE_KEY)||'[]');}catch(e){MEM.adj=[];}}return JSON.parse(JSON.stringify(MEM.adj));}
+function saveAdjustments(a){MEM.adj=JSON.parse(JSON.stringify(a));lsSet(ADJ_STORAGE_KEY,JSON.stringify(a));queueSync();}
+function setCloud(msg,color){var el=document.getElementById('cloud-status');if(el){el.textContent=msg;el.style.color=color||'var(--muted)';}}
+function docKey(prefix,id){return prefix+String(id).replace(/[^A-Za-z0-9_\-.~:@+]/g,'_');}
+function bodyFor(kind,rec){
+  var r=JSON.parse(JSON.stringify(rec));
+  if(r.transcript&&r.transcript.length>200000) r.transcript=r.transcript.substring(0,200000);
+  return {kind:kind,rec:r};
+}
+function desiredDocs(){
+  var out={};
+  loadCalls().forEach(function(c){out[docKey('call_',c.id)]=bodyFor('call',c);});
+  loadAdjustments().forEach(function(a){out[docKey('adj_',a.id)]=bodyFor('adj',a);});
+  return out;
+}
+function queueSync(){
+  if(!CLOUD.col) return;
+  CLOUD.chain=CLOUD.chain.then(doSync).catch(function(e){
+    console.warn('Sync failed',e);
+    setCloud(e&&e.code==='quota_exceeded'?'⚠ Account storage full — export a backup':'⚠ Not saved to account — export a backup','var(--danger)');
+  });
+}
+async function doSync(){
+  var col=CLOUD.col; if(!col) return;
+  var want=desiredDocs(), changed=false;
+  for(var k in want){
+    var j=JSON.stringify(want[k]);
+    if(CLOUD.synced[k]!==j){setCloud('Saving…');await col.doc(k).set(want[k]);CLOUD.synced[k]=j;changed=true;}
+  }
+  for(var k2 in CLOUD.synced){
+    if(!want[k2]){setCloud('Saving…');await col.doc(k2).delete();delete CLOUD.synced[k2];changed=true;}
+  }
+  setCloud('☁ Saved to your account','var(--success)');
+}
+(async function initCloud(){
+  if(!window.claude||!window.claude.use){setCloud('Saved in this browser only — use Export to back up','var(--warn)');return;}
+  var timer=setTimeout(function(){setCloud('Account storage not reachable yet — saving in this browser','var(--warn)');},10000);
+  try{
+    var u=await claude.use('user'), db=await claude.use('db');
+    var uid=u?await u.id():null;
+    if(!db||!uid){clearTimeout(timer);setCloud('Saved in this browser only — use Export to back up','var(--warn)');return;}
+    var col=db.collection('data/users/'+uid);
+    var snap=await col.get();
+    clearTimeout(timer);
+    if(snap.size){
+      var calls=[],adj=[];
+      snap.docs.forEach(function(d){
+        var b=d.data(); if(!b||!b.rec) return;
+        CLOUD.synced[d.id]=JSON.stringify(bodyFor(b.kind,b.rec));
+        if(b.kind==='adj') adj.push(b.rec); else calls.push(b.rec);
+      });
+      calls.sort(function(a,b){return new Date(b.timestamp)-new Date(a.timestamp);});
+      MEM.calls=calls; MEM.adj=adj;
+      lsSet(STORAGE_KEY,JSON.stringify(calls)); lsSet(ADJ_STORAGE_KEY,JSON.stringify(adj));
+      CLOUD.col=col;
+      setCloud('☁ Saved to your account','var(--success)');
+    } else {
+      CLOUD.col=col;
+      setCloud('☁ Saved to your account','var(--success)');
+      if(loadCalls().length||loadAdjustments().length) queueSync();
+    }
+    var dash=document.getElementById('page-dashboard');
+    if(dash&&dash.classList.contains('active')) renderDashboard();
+  }catch(e){
+    clearTimeout(timer);
+    console.warn('Cloud init failed',e);
+    setCloud('Saved in this browser only — use Export to back up','var(--warn)');
+  }
+})();
+
+// API KEY — remembered in this browser
+function getApiKey(){var el=document.getElementById('api-key');return el?el.value.trim():'';}
+function saveApiKey(){lsSet('anthropic_api_key',getApiKey());}
+document.addEventListener('DOMContentLoaded',function(){var el=document.getElementById('api-key');if(el&&!el.value) el.value=lsGet('anthropic_api_key')||'';});
+// CLAUDE — uses your API key when it can reach the API; otherwise your Claude account
+async function anthropicFetch(url,opts){
+  function fail(m){return {json:async function(){return {error:{message:m}};}};}
+  var key=getApiKey();
+  if(key&&key!=='claude'){
+    try{
+      var b=JSON.parse(opts.body); b.model='claude-sonnet-5-5';
+      var h=Object.assign({},opts.headers,{'x-api-key':key});
+      var resp=await fetch(url,{method:'POST',headers:h,body:JSON.stringify(b)});
+      var data=await resp.json();
+      if(!data.error) return {json:async function(){return data;}};
+      console.warn('API key call failed, falling back to Claude account:',data.error);
+    }catch(e){console.warn('Direct API blocked here, using Claude account instead.',e);}
+  }
+  try{
+    var body=JSON.parse(opts.body);
+    var s=(window.claude&&window.claude.use)?await claude.use('sample'):null;
+    if(!s) return fail('Analysis only works when this dashboard is opened inside Claude (claude.ai → Artifacts).');
+    var msgs=body.messages.map(function(m){return {role:m.role,content:m.content};});
+    if(body.system) msgs[0]={role:'user',content:'INSTRUCTIONS:\n'+body.system+'\n\n'+msgs[0].content};
+    var r=await s(msgs,{modelTier:'default',cache:false});
+    return {json:async function(){return {content:[{type:'text',text:(r&&r.text)||''}]};}};
+  }catch(e){
+    var code=e&&e.code;
+    return fail(code==='not_granted'?'Claude access was not allowed for this page — reload and click Allow.':code==='rate_limited'?'Too many requests right now — wait a minute and try again.':((e&&e.message)||String(e)));
+  }
+}
+
+
+// HELPERS
+function cls(v){return v>=7.5?'hi':v>=5?'md':'lo';}
+function setStatus(id,msg,type){var el=document.getElementById(id);if(!el)return;el.textContent=msg;el.className='status'+(type?' '+type:'');}
+function totalScore(s){if(!s)return 0;return Math.round(SCORE_KEYS.reduce(function(a,k){return a+(s[k]||0);},0)*10)/10;}
+function avgScore(s){return totalScore(s);}
+function fmtMoney(n){return n?'$'+Math.round(n).toLocaleString():'—';}
+function monthKey(d){return d.toISOString().substring(0,7);}
+function nowMonthKey(){return monthKey(new Date());}
+
+// ANALYZE
+async function runAnalysis(){
+  var transcript=document.getElementById('transcript').value.trim();
+  var apiKey=getApiKey()||'claude';
+  if(!transcript){setStatus('status','Paste a transcript first.','error');return;}
+  if(!apiKey){setStatus('status','Enter your Anthropic API key.','error');return;}
+  var btn=document.getElementById('btn-analyze');
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Analyzing...';
+  setStatus('status','Analyzing...','');
+  document.getElementById('results').style.display='none';
+  var refundAmt=parseFloat(document.getElementById('refund').value)||0;
+  var isNoPitch=callType==='not_pitched'||callType==='no_show';
+  var system='You are an expert sales coach. Return ONLY valid JSON, no markdown.\n\nExtract from transcript:\n- closer_name: salesperson name (empty if unclear)\n- client_name: prospect name (empty if unclear)\n- generated_revenue: total contract value USD (0 if not closed)\n- cash_collected: amount paid today USD (0 if not mentioned)\n- installments: number of monthly installments (1 if single, 0 if not closed)\n\n{\n  "closer_name":"","client_name":"","generated_revenue":0,"cash_collected":0,"installments":0,\n  "scores":{"call_control":<0-10>,"discovery_depth":<0-10>,"belief_shifting":<0-10>,"objection_handling":<0-10>,"pitch_effectiveness":<0-10>,"closing_strength":<0-10>,"eq_in_closing":<0-10>} Score all 7 categories 0-10. The 6 main categories (call_control through closing_strength) total out of 60; eq_in_closing is displayed separately out of 10.,\n  "phases":{"opener":<min>,"discovery":<min>,"pitch":<min>,"objection_handling":<min>,"close":<min>},\n  "strengths":["<strength1>","<strength2>","<strength3>"],\n  "improvements":["<improvement1>","<improvement2>","<improvement3>"],\n  "outcome":"<closed|no_close|follow_up|unknown>"\n}\n\n'+(isNoPitch?'No pitch was made. Score accordingly. Outcome = follow_up unless stated otherwise.\n\n':'');
+  try{
+    var resp=await anthropicFetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1200,system:system,messages:[{role:'user',content:'Example 1 of 2 -- Ben Vering (weak call, did not close, 31/60):\\n'+'Impromptu Google Meet Meeting - June 10\nBen Vering - AlwaysCoach - Pitched - Follow up\n\n0:34 - Giulia: Good morning. I work with Dylan. My role is to see whether we can help you, and then walk you through the program if we can. Do you have the full hour?\n1:24 - Ben: I\'ve been following him for two or three years. Pretty educational. Always been interested in getting a nutritionist.\n1:53 - Ben: Just been taking my diet more seriously. I\'m on day 67 of 75 Hard, lost about 25 pounds. It\'s harder now to get lean.\n3:49 - Ben: Beach body ready. I\'m six four, started at 240, now 216. I don\'t really know how much more weight I need to lose.\n8:26 - Ben: I don\'t really know. I just figured I would try it out, something new.\n18:01 - Ben: It\'s just a nice to have, really. I just want to lose weight. It wasn\'t really that deep to me.\n19:42 - Giulia: I\'m not entirely sure you\'re 100% a good fit. This does seem like a nice to have.\n21:03 - Giulia: Nothing below $400 a month.\n21:08 - Ben: That\'s around what I\'d expect.\n31:39 - Ben: Do I have to make a decision today? I wanted to sleep on it.\n31:54 - Ben: I want to shop around a little bit to see what my options are.\n33:21 - Ben: I just decided to reach out to Dylan about eight hours ago. I\'m not ready to put a payment down today.\n35:16 - Ben: I\'m satisfied with my own progress but I think I could step to the next level with a nutritionist.\n45:57 - Ben: I\'d probably be in contact soon.\n46:14 - Giulia: Just reach back out whenever you\'re ready.'},{role:'assistant',content:'[{"index":1,"closer_name":"Giulia Sodaro","client_name":"Ben Vering","generated_revenue":0,"cash_collected":0,"installments":0,"outcome":"follow_up","scores":{"call_control":7,"discovery_depth":5,"belief_shifting":4,"objection_handling":6,"pitch_effectiveness":5,"closing_strength":4,"eq_in_closing":4},"phases":{"opener":2,"discovery":20,"pitch":8,"objection_handling":12,"close":5},"strengths":["Maintained call control and frame throughout despite a low-urgency, vague prospect","Surfaced real context: deployment, military background, injury history, financial improvement, going into cutting blind","Engaged the shop-around objection with multiple angles and persistence"],"improvements":["Discovery accepted the prospect\'s own framing -- it\'s just a nice to have was never probed for a deeper emotional driver","Pitch was a standard 3-step walkthrough; only briefly connected to what the prospect actually said was his problem (going into cutting blind)","Call ended passively -- reach out whenever you\'re ready with no specific next step, date, or commitment secured"]}]'},{role:'user',content:'Example 2 of 2 -- Amber Dobson (strong call, closed $2300, 49/60):\\n'+'Amber Dobson -  Mobility Consultation - May 17\nVIEW RECORDING - 76 mins (No highlights): \n\n---\n\n0:00 - Amber\n  Can hear me and see me okay? This meeting is being recorded.\n\n0:03 - Giulia Sodaro (movesmethod.com)\n  Perfect. So welcome to the call. My name is Giulia and I\'m one of the mobility consultants here at Moves Method.\n\n0:12 - Amber\n  Are you good to go for the full 45 minutes? Yeah.\n\n0:17 - Giulia Sodaro (movesmethod.com)\n  Perfect. All right. So I know you spoke with my colleague on the phone.\n\n0:22 - Amber\n  Was it Ryan? Is that right?\n\n0:24 - Giulia Sodaro (movesmethod.com)\n  I so. Yeah. Perfect. So we have drafted an initial assessment based on your conversation with Ryan so that I can also have been like be a little bit more prepared for our conversation today.  I can see how the primary areas of concern are the lower back, the right hip, the armstrings, all likely connected through the same underlying pattern.  So the hip joint appears to have lost stability over time. The body has responded by tensing the surrounding muscles, including the armstrings, to compensate.  So that tension then pulls the lower back, creating the persistent aches that you are describing. So long hours sitting at your desk, I see you work from home, the hip flexors shorten, the glutes switch off, and yeah, the whole back end of the body just stops doing its job.\n\n1:21 - Amber\n  So, yeah.\n\n1:24 - Giulia Sodaro (movesmethod.com)\n  Okay.\n\n1:24 - Amber\n  So, can I add, Giulia, I neglected to mention, and so I\'ve done two days of the movements, and it kind of reminded me that my right knee is also problematic, that I\'ve just lived with it for so long, I don\'t even think about it anymore.  But as I\'m doing the moves, I was like, oh, I forgot to mention, my right knee has stiffness too.  So right hip, right knee, and they\'re all probably connected.\n\n1:53 - Giulia Sodaro (movesmethod.com)\n  Yeah, yeah, it makes sense. I mean, you know, it does not surprise me. I lots of people who have\n\n[...transcript continues...]\n\nut in the time and the work, I don\'t see why that would happen.\n\n1:11:31 - Amber\n  Right. Okay, I\'m just looking through.\n\n1:11:38 - Giulia Sodaro (movesmethod.com)\n  Yeah, take your time. I still have like 10 minutes or so.\n\n1:11:43 - Amber\n  Don\'t start the program within 70. Okay. Okay. Okay, I signed.\n\n1:13:43 - Giulia Sodaro (movesmethod.com)\n  Perfect. Let me see if I see it on my end. It\'s not showing up, but I\'m sure that will.  Yeah, probably slow. Like I see it, I see it in the system at send. So yeah. Okay. So I\'m excited for you to feel the best version of yourself and I hope to see you succeed.\n\n1:14:20 - Amber\n  Yeah.\n\n1:14:22 - Giulia Sodaro (movesmethod.com)\n  Okay. Yeah. So have a good rest of the day and reach out to me. You have my email and also like if you send us a DM, we will see that in case you have any issues in like say like the first steps before you actually start.  And on my end, I\'ll make sure that you get a kick- female coach.\n  ACTION ITEM: Confirm Amber\'s onboarding agreement processed; then trigger onboarding emails - WATCH: https://fathom.video/calls/676091348?timestamp=4480.9999\n\n1:14:44 - Amber\n  Yeah. So am I going to get like an email communication with the next steps?\n\n1:14:51 - Giulia Sodaro (movesmethod.com)\n  Okay. Yeah. You\'re going to get like, that\'s why I was checking if the agreement was coming back because that triggers from that.  But again, it\'s... So let me just get like through the back end on our end to make sure everything is working well.\n  ACTION ITEM: Process refund for Amber\'s White Belt/Levels training - WATCH: https://fathom.video/calls/676091348?timestamp=4504.9999  But you will see different emails for the onboarding instructions and how to actually access the platform.\n\n1:15:14 - Amber\n  Okay, great. And then you\'ll look into that refund for the levels.\n\n1:15:19 - Giulia Sodaro (movesmethod.com)\n  Yes, absolutely.\n\n1:15:20 - Amber\n  Yeah. Okay, great. Okay. All right. Well, thank you so much.\n\n1:15:25 - Giulia Sodaro (movesmethod.com)\n  Thank you, Amber.\n\n1:15:25 - Amber\n  Yeah, have a good day.\n\n1:15:27 - Giulia Sodaro (movesmethod.com)\n  Bye.\n\n1:15:28 - Amber\n  Hopefully I\'ll see you again sometime and touch my toes.\n\n1:15:31 - Giulia Sodaro (movesmethod.com)\n  to see you in better shape and touching your toes, yeah.\n\n1:15:35 - Amber\n  Right, exactly.\n\n1:15:36 - Giulia Sodaro (movesmethod.com)\n  Bye.\n\n1:15:37 - Amber\n  Okay, have a good day.\n\n1:15:38 - Giulia Sodaro (movesmethod.com)\n  Bye.'},{role:'assistant',content:'[{"index":1,"closer_name":"Giulia Sodaro","client_name":"Amber Dobson","generated_revenue":2300,"cash_collected":2300,"installments":1,"outcome":"closed","scores":{"call_control":8,"discovery_depth":9,"belief_shifting":9,"objection_handling":8,"pitch_effectiveness":7,"closing_strength":8,"eq_in_closing":9},"phases":{"opener":3,"discovery":28,"pitch":12,"objection_handling":8,"close":5},"strengths":["Deep discovery surfacing emotional drivers including identity, independence, and specific life impact","Strong belief shifting -- prospect acknowledged new perspectives on her situation and what coaching could offer","Warm and emotionally attuned throughout -- genuine connection established and maintained to close"],"improvements":["Pitch could have been more tightly connected to specific discovered pain points rather than following a standard walkthrough","A few moments where prospect questions could have been probed one level deeper","Minor pacing issues in the close where silence could have been held longer to let the decision land"]}]'},{role:'user',content:'Score this call. Account: '+account+', Type: '+callType+'. Return ONLY a JSON object (not array) with the schema in your system prompt.\n\nTRANSCRIPT:\n'+transcript}]})
+    });
+    var data=await resp.json();
+    if(data.error) throw new Error(data.error.message);
+    var text=data.content.map(function(b){return b.text||'';}).join('');
+    var clean=text.replace(/```json|```/g,'').trim();
+    var s=clean.indexOf('{'), e=clean.lastIndexOf('}');
+    if(s<0||e<0) throw new Error('No JSON in response');
+    var parsed=JSON.parse(clean.substring(s,e+1));
+    if(parsed.closer_name&&!document.getElementById('closer').value.trim()) document.getElementById('closer').value=parsed.closer_name;
+    if(parsed.client_name&&!document.getElementById('client').value.trim()) document.getElementById('client').value=parsed.client_name;
+    var finalCloser=document.getElementById('closer').value.trim()||parsed.closer_name||'Unknown';
+    var finalClient=document.getElementById('client').value.trim()||parsed.client_name||'';
+    var genRev=parsed.generated_revenue||0;
+    var cashCol=parsed.cash_collected||0;
+    var installments=parsed.installments||0;
+    var effectiveRefund=Math.min(refundAmt,genRev);
+    var effectiveGenRev=genRev-effectiveRefund;
+    var effectiveCash=effectiveRefund>=genRev?0:cashCol;
+    var cd=document.getElementById('call-date').value;
+    var fd=fathomData?fathomData.date:'';
+    var ts=(fd||cd)?((fd||cd)+'T12:00:00.000Z'):new Date().toISOString();
+    currentResult={
+      scores:parsed.scores,phases:parsed.phases,strengths:parsed.strengths||[],improvements:parsed.improvements||[],outcome:parsed.outcome||'unknown',
+      account:account,comm:comm,callType:callType,program:null,
+      closer:finalCloser,client:finalClient,
+      generatedRevenue:effectiveGenRev,cashCollected:effectiveCash,installments:installments,refund:effectiveRefund,
+      fathom:fathomData||null,transcript:transcript,timestamp:ts,id:Date.now()
+    };
+    renderResults(currentResult);
+    setStatus('status','Analysis complete ✓','success');
+    document.getElementById('save-status').textContent='';
+  }catch(e){
+    setStatus('status','Error: '+e.message,'error');
+  }
+  btn.disabled=false; btn.innerHTML='▶ Analyze transcript';
+}
+
+
+
+function renderScoreGrid(elId,scores,editable){
+  var el=document.getElementById(elId); if(!el) return;
+  var html=SCORE_KEYS.map(function(k){
+    var v=scores[k]||0, c=cls(v);
+    var numEl=editable
+      ?'<input type="number" min="0" max="10" step="1" value="'+v+'" data-key="'+k+'" onchange="updateModalScore(this)" style="width:44px;font-size:18px;font-weight:700;border:1px solid var(--border-md);border-radius:4px;padding:2px 4px;color:var(--text);text-align:center" class="'+c+'">'
+      :'<div class="score-num '+c+'">'+v+'</div>';
+    return '<div class="score-card"><div class="score-lbl">'+SCORE_LABELS[k]+'</div>'+numEl+'<div class="bar"><div class="bar-inner '+c+'" style="width:'+(v*10)+'%" id="bar-'+k+'"></div></div></div>';
+  }).join('');
+  var eq=scores[EQ_KEY]||0, eqc=cls(eq);
+  var eqEl=editable
+    ?'<input type="number" min="0" max="10" step="1" value="'+eq+'" data-key="'+EQ_KEY+'" onchange="updateModalScore(this)" style="width:44px;font-size:18px;font-weight:700;border:1px solid var(--border-md);border-radius:4px;padding:2px 4px;color:var(--text);text-align:center" class="'+eqc+'">'
+    :'<div class="score-num '+eqc+'">'+eq+' / 10</div>';
+  html+='<div class="score-card" style="border:1px solid var(--border-md)"><div class="score-lbl">EQ in closing</div>'+eqEl+'<div class="bar"><div class="bar-inner '+eqc+'" style="width:'+(eq*10)+'%" id="bar-'+EQ_KEY+'"></div></div></div>';
+  el.innerHTML=html;
+}
+
+function updateModalScore(input){
+  var k=input.getAttribute('data-key');
+  var v=Math.max(0,Math.min(10,parseInt(input.value)||0));
+  input.value=v;
+  var c=cls(v);
+  input.className=c;
+  var bar=document.getElementById('bar-'+k);
+  if(bar){bar.className='bar-inner '+c;bar.style.width=(v*10)+'%';}
+  // Update total score display
+  var allInputs=document.querySelectorAll('#m-scores input[data-key]');
+  var total=0;
+  allInputs.forEach(function(inp){
+    var key=inp.getAttribute('data-key');
+    if(key!==EQ_KEY) total+=Math.max(0,Math.min(10,parseInt(inp.value)||0));
+  });
+  var totalEl=document.querySelector('#m-total-score');
+  if(totalEl) totalEl.textContent=total+' / 60';
+  // Save to calls immediately
+  if(openCallId){
+    var calls=loadCalls();
+    var c2=calls.find(function(x){return x.id===openCallId;});
+    if(c2){
+      if(!c2.scores) c2.scores={};
+      c2.scores[k]=v;
+      saveCalls(calls);
+    }
+  }
+}
+
+function renderPhaseGrid(elId,phases,suffix){
+  var el=document.getElementById(elId); if(!el) return;
+  var total=PHASE_KEYS.reduce(function(s,k){return s+(phases[k]||0);},0);
+  el.innerHTML=PHASE_KEYS.map(function(k){
+    return '<div class="phase-card"><div class="phase-lbl">'+PHASE_LABELS[k]+'</div><div class="phase-val">'+(phases[k]||0)+'</div><div class="phase-unit">'+(suffix||'min')+'</div></div>';
+  }).join('')+'<div class="phase-card" style="border:1px solid var(--border-md)"><div class="phase-lbl">Total</div><div class="phase-val">'+total+'</div><div class="phase-unit">'+(suffix||'min')+'</div></div>';
+}
+
+function renderFeedbackBox(elId,strengths,improvements){
+  var el=document.getElementById(elId); if(!el) return;
+  var s=strengths||[], im=improvements||[];
+  el.innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'
+    +'<div><div style="font-size:12px;font-weight:600;color:var(--success);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px">✓ Strengths</div>'
+    +s.map(function(x){return '<div style="font-size:13px;margin-bottom:6px;padding-left:8px;border-left:2px solid var(--success)">'+x+'</div>';}).join('')
+    +'</div><div><div style="font-size:12px;font-weight:600;color:var(--danger);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px">↑ Improve</div>'
+    +im.map(function(x){return '<div style="font-size:13px;margin-bottom:6px;padding-left:8px;border-left:2px solid var(--danger)">'+x+'</div>';}).join('')
+    +'</div></div>';
+}
+
+function renderResults(r){
+  var s=r.scores, a=avgScore(s);
+  var remaining=r.generatedRevenue&&r.installments>1?r.generatedRevenue-r.cashCollected:0;
+  var instCommAmt=r.cashCollected?Math.round(r.cashCollected*r.comm/100):0;
+  document.getElementById('r-overall-grid').innerHTML=
+    '<div class="stat"><div class="stat-label">Total score</div><div class="stat-val" style="color:var(--accent)">'+a+' / 60</div></div>'
+    +'<div class="stat"><div class="stat-label">Cash collected</div><div class="stat-val" style="color:var(--success)">'+fmtMoney(r.cashCollected)+'</div></div>'
+    +'<div class="stat"><div class="stat-label">Revenue generated</div><div class="stat-val">'+fmtMoney(r.generatedRevenue)+'</div></div>'
+    +'<div class="stat"><div class="stat-label">Remaining</div><div class="stat-val" style="color:var(--purple)">'+fmtMoney(remaining)+'</div></div>'
+    +'<div class="stat"><div class="stat-label">Installments</div><div class="stat-val">'+(r.installments||'—')+'</div></div>'
+    +'<div class="stat"><div class="stat-label">Commission today</div><div class="stat-val" style="color:var(--success)">'+fmtMoney(instCommAmt)+'</div></div>';
+  renderScoreGrid('score-grid',s);
+  renderPhaseGrid('phase-grid',r.phases||{});
+  renderFeedbackBox('feedback',r.strengths,r.improvements);
+  document.getElementById('results').style.display='block';
+}
+
+function saveCall(){
+  if(!currentResult) return;
+  var calls=loadCalls();
+  if(calls.find(function(c){return c.id===currentResult.id;})){setStatus('save-status','Already saved.','');return;}
+  calls.unshift(currentResult);
+  saveCalls(calls);
+  setStatus('save-status','Saved to dashboard ✓','success');
+}
+
+// INSTALLMENT PROJECTION
+function projectInstallments(call){
+  // No installments to project if not closed or no revenue on record
+  if(!call.generatedRevenue||!call.installments||call.installments<=0) return [];
+  var instAmt=Math.round(call.generatedRevenue/call.installments);
+  var commAmt=instAmt*(call.comm||0)/100; // kept unrounded; rounded only when displayed/aggregated
+  var callDate=new Date(call.dateClosed||call.timestamp);
+  // Use UTC year/month/day integer arithmetic (not Date.setMonth) so that a call date on the
+  // 29th/30th/31st doesn't roll over into the wrong month when the target month is shorter
+  // (e.g. May 31 + 1 month must land on Jun 30, not spill into July), and so each installment
+  // gets an exact due date (not just a month bucket) for precise date-range filtering.
+  var baseYear=callDate.getUTCFullYear();
+  var baseMonth=callDate.getUTCMonth(); // 0-indexed
+  var baseDay=callDate.getUTCDate();
+  function mkFor(i){
+    var total=baseMonth+i;
+    var y=baseYear+Math.floor(total/12);
+    var m0=((total%12)+12)%12; // 0-indexed target month
+    var lastDay=new Date(Date.UTC(y,m0+1,0)).getUTCDate();
+    var day=Math.min(baseDay,lastDay);
+    var iso=new Date(Date.UTC(y,m0,day)).toISOString();
+    return {date:iso.substring(0,10),month:iso.substring(0,7)};
+  }
+  // Single-installment deal (1/1): just the one payment, always shown as the "Active" row.
+  if(call.installments===1){var d0=mkFor(0);return [{date:d0.date,month:d0.month,amount:instAmt,commission:commAmt,first:true}];}
+  // Multi-installment deal already paid in full: nothing left to project.
+  if(call.cashCollected>=call.generatedRevenue) return [];
+  var rows=[];
+  for(var i=0;i<call.installments;i++){
+    var d=mkFor(i);
+    rows.push({date:d.date,month:d.month,amount:instAmt,commission:commAmt,first:i===0});
+  }
+  return rows;
+}
+
+// DASHBOARD
+function getFiltered(){
+  var calls=loadCalls();
+  var fa=document.getElementById('f-account')?document.getElementById('f-account').value:'';
+  var ft=document.getElementById('f-type')?document.getElementById('f-type').value:'';
+  var fc=document.getElementById('f-client')?document.getElementById('f-client').value.toLowerCase().trim():'';
+  var fd1=document.getElementById('f-date-from')?document.getElementById('f-date-from').value:'';
+  var fd2=document.getElementById('f-date-to')?document.getElementById('f-date-to').value:'';
+  if(fa) calls=calls.filter(function(c){return c.account===fa;});
+  if(ft) calls=calls.filter(function(c){return c.callType===ft;});
+  if(fc) calls=calls.filter(function(c){return (c.client||'').toLowerCase().includes(fc);});
+  if(fd1) calls=calls.filter(function(c){return c.timestamp>=fd1;});
+  if(fd2) calls=calls.filter(function(c){return c.timestamp<=fd2+'T23:59:59';});
+  return calls;
+}
+
+function openNoShowModal(){
+  document.getElementById('ns-date').value=new Date().toISOString().substring(0,10);
+  document.getElementById('ns-client').value='';
+  document.getElementById('noshowModal').classList.add('open');
+}
+function closeNoShowModal(){
+  document.getElementById('noshowModal').classList.remove('open');
+}
+function saveNoShow(){
+  var d=document.getElementById('ns-date').value;
+  var acct=document.getElementById('ns-account').value;
+  var client=document.getElementById('ns-client').value.trim()||'No-show';
+  var closer=document.getElementById('ns-closer').value.trim()||'Sophie Evers';
+  var commMap={'Sales Queens':10,'Content Queendom (UGC)':10,'Limitless Coaching Fitness':10};
+  var rec={
+    id:Date.now(),
+    timestamp:(d||new Date().toISOString().substring(0,10))+'T12:00:00.000Z',
+    dateClosed:'',
+    account:acct,
+    comm:commMap[acct]||10,
+    callType:'no_show',
+    outcome:'no_close',
+    closer:closer,
+    client:client,
+    generatedRevenue:0,
+    cashCollected:0,
+    installments:0,
+    refund:0,
+    scores:{call_control:0,discovery_depth:0,belief_shifting:0,objection_handling:0,pitch_effectiveness:0,closing_strength:0,eq_in_closing:0},
+    phases:{opener:0,discovery:0,pitch:0,objection_handling:0,close:0},
+    strengths:[],improvements:[],
+    transcript:'',
+    fathom:null,
+    rescored:false
+  };
+  var calls=loadCalls();
+  calls.unshift(rec);
+  saveCalls(calls);
+  closeNoShowModal();
+  renderDashboard();
+}
+
+function openAdjModal(id){
+  document.getElementById('adj-id').value=id||'';
+  if(id){
+    var a=loadAdjustments().find(function(x){return x.id===id;});
+    if(a){
+      document.getElementById('adj-modal-title').textContent='Edit bonus / manual payment';
+      document.getElementById('adj-date').value=a.date||'';
+      document.getElementById('adj-label').value=a.label||'';
+      document.getElementById('adj-account').value=a.account||'';
+      document.getElementById('adj-amount').value=a.amount||'';
+    }
+  } else {
+    document.getElementById('adj-modal-title').textContent='Add bonus / manual payment';
+    document.getElementById('adj-date').value=new Date().toISOString().substring(0,10);
+    document.getElementById('adj-label').value='';
+    document.getElementById('adj-account').value='';
+    document.getElementById('adj-amount').value='';
+  }
+  document.getElementById('adjModal').classList.add('open');
+}
+function closeAdjModal(){
+  document.getElementById('adjModal').classList.remove('open');
+}
+function saveAdjustment(){
+  var id=document.getElementById('adj-id').value;
+  var date=document.getElementById('adj-date').value||new Date().toISOString().substring(0,10);
+  var label=document.getElementById('adj-label').value.trim()||'Manual payment';
+  var acct=document.getElementById('adj-account').value;
+  var amount=parseFloat(document.getElementById('adj-amount').value)||0;
+  var list=loadAdjustments();
+  if(id){
+    var idNum=Number(id);
+    list=list.map(function(a){return a.id===idNum?{id:idNum,date:date,label:label,account:acct,amount:amount}:a;});
+  } else {
+    list.unshift({id:Date.now(),date:date,label:label,account:acct,amount:amount});
+  }
+  saveAdjustments(list);
+  closeAdjModal();
+  renderDashboard();
+}
+async function deleteAdjustment(id){
+  if(!(await uiConfirm('Delete this entry?'))) return;
+  saveAdjustments(loadAdjustments().filter(function(a){return a.id!==id;}));
+  renderDashboard();
+}
+
+function renderDashboard(){
+  var calls=getFiltered();
+  var todayISO=new Date().toISOString().substring(0,10);
+  var fd1=document.getElementById('f-date-from')?document.getElementById('f-date-from').value:'';
+  var fd2=document.getElementById('f-date-to')?document.getElementById('f-date-to').value:'';
+  var rangeStart=fd1||'0000-00-00';
+  var rangeEnd=fd2||'9999-99-99';
+
+  var closed=calls.filter(function(c){return (c.outcome||'').toLowerCase()==='closed';});
+  var taken=calls.filter(function(c){return c.callType!=='no_show';});
+  var pitchedAll=calls.filter(function(c){return c.callType==='pitched'||c.callType==='fdq';});
+  var pitchedOnly=calls.filter(function(c){return c.callType==='pitched';});
+  var fdqCalls=calls.filter(function(c){return c.callType==='fdq';});
+
+  var allClosed=loadCalls().filter(function(c){return (c.outcome||'').toLowerCase()==='closed';});
+  var fa=document.getElementById('f-account')?document.getElementById('f-account').value:'';
+  var noDateFilter=!fd1&&!fd2;
+  var cashPeriod=0,cashPassive=0,commPeriod=0,totalGenerated=0;
+
+  if(noDateFilter){
+    // CASH PERIOD: first payments from all closed calls + passive installments due up to today
+    // CASH PREV MONTHS: always $0
+    // COMMISSION: commission on all cash (active + passive) up to today
+    // REVENUE GENERATED: contracted value of all closed calls
+    allClosed.forEach(function(c){
+      if(fa&&c.account!==fa) return;
+      cashPeriod+=c.cashCollected||0;
+      commPeriod+=(c.cashCollected||0)*(c.comm||0)/100;
+      totalGenerated+=c.generatedRevenue||0;
+      projectInstallments(c).forEach(function(r){
+        if(r.first) return; // months 2+ only
+        if(r.date<=todayISO){
+          cashPeriod+=r.amount;
+          commPeriod+=r.commission;
+        }
+      });
+    });
+  } else {
+    // CASH PERIOD: first payments (cashCollected) from closed calls closed within date range (exact day)
+    // CASH PREV MONTHS: passive installments due within the exact date range, regardless of when the deal closed
+    // COMMISSION: commission on period cash + commission on prev months cash
+    // REVENUE GENERATED: contracted value of closed calls within date range
+    allClosed.forEach(function(c){
+      if(fa&&c.account!==fa) return;
+      var cDate=(c.dateClosed||c.timestamp||'').substring(0,10);
+      if(cDate>=rangeStart&&cDate<=rangeEnd){
+        // Call closed within selected range — count first payment and revenue
+        cashPeriod+=c.cashCollected||0;
+        commPeriod+=(c.cashCollected||0)*(c.comm||0)/100;
+        totalGenerated+=c.generatedRevenue||0;
+      }
+      projectInstallments(c).forEach(function(r){
+        if(r.first) return; // months 2+ only
+        if(r.date>=rangeStart&&r.date<=rangeEnd){
+          cashPassive+=r.amount;
+          commPeriod+=r.commission;
+        }
+      });
+    });
+  }
+
+  // Manual bonuses / adjustments (not tied to a call) — folded into Commission (period)
+  var allAdj=loadAdjustments();
+  var adjInRange=allAdj.filter(function(a){
+    if(fa&&a.account&&a.account!==fa) return false;
+    if(noDateFilter) return true;
+    return a.date>=rangeStart&&a.date<=rangeEnd;
+  });
+  var adjTotal=adjInRange.reduce(function(s,a){return s+(a.amount||0);},0);
+  commPeriod+=adjTotal;
+
+  document.getElementById('kpi-cash-period').textContent='$'+cashPeriod.toLocaleString();
+  document.getElementById('kpi-cash-passive').textContent='$'+cashPassive.toLocaleString();
+  document.getElementById('kpi-comm-period').textContent='$'+Math.round(commPeriod).toLocaleString();
+  document.getElementById('kpi-generated').textContent='$'+totalGenerated.toLocaleString();
+  document.getElementById('kpi-booked').textContent=calls.length;
+  document.getElementById('kpi-taken').textContent=taken.length;
+  document.getElementById('kpi-pitched-count').textContent=pitchedAll.length;
+  document.getElementById('kpi-closed-count').textContent=closed.length;
+  document.getElementById('kpi-fdq-count').textContent=fdqCalls.length;
+
+  // Per-call efficiency KPIs (revenue/cash relative to booked vs. taken calls), adapt to current filters
+  var totalCashForPeriod=cashPeriod+cashPassive;
+  document.getElementById('kpi-rev-per-booked').textContent=calls.length?('$'+Math.round(totalGenerated/calls.length).toLocaleString()):'—';
+  document.getElementById('kpi-rev-per-taken').textContent=taken.length?('$'+Math.round(totalGenerated/taken.length).toLocaleString()):'—';
+  document.getElementById('kpi-cash-per-booked').textContent=calls.length?('$'+Math.round(totalCashForPeriod/calls.length).toLocaleString()):'—';
+  document.getElementById('kpi-cash-per-taken').textContent=taken.length?('$'+Math.round(totalCashForPeriod/taken.length).toLocaleString()):'—';
+
+  // Avg calls/day
+  if(fd1&&fd2){
+    var days=Math.max(1,Math.round((new Date(fd2)-new Date(fd1))/(86400000))+1);
+    document.getElementById('kpi-avg-day').textContent=(taken.length/days).toFixed(1);
+    document.getElementById('kpi-avg-day-sub').textContent='over '+days+' days';
+  }else if(calls.length>1){
+    var dates=calls.map(function(c){return new Date(c.timestamp);}).sort(function(a,b){return a-b;});
+    var days=Math.max(1,Math.round((dates[dates.length-1]-dates[0])/86400000)+1);
+    document.getElementById('kpi-avg-day').textContent=(taken.length/days).toFixed(1);
+    document.getElementById('kpi-avg-day-sub').textContent='over '+days+' days';
+  }else{
+    document.getElementById('kpi-avg-day').textContent='—';
+    document.getElementById('kpi-avg-day-sub').textContent='';
+  }
+
+  // Close rates
+  function cr(den){return den.length?Math.round(closed.filter(function(c){return den.indexOf(c)>-1;}).length/den.length*100)+'%':'—';}
+  function crSub(den,label){return den.length?(closed.filter(function(c){return den.indexOf(c)>-1;}).length+' of '+den.length+' '+label):'';}
+  document.getElementById('kpi-cr-booked').textContent=cr(calls);
+  document.getElementById('kpi-cr-booked-sub').textContent=crSub(calls,'booked');
+  document.getElementById('kpi-cr-showed').textContent=cr(taken);
+  document.getElementById('kpi-cr-showed-sub').textContent=crSub(taken,'showed');
+  document.getElementById('kpi-cr-pitched-all').textContent=cr(pitchedAll);
+  document.getElementById('kpi-cr-pitched-all-sub').textContent=crSub(pitchedAll,'pitched');
+  document.getElementById('kpi-cr-pitched-excl').textContent=cr(pitchedOnly);
+  document.getElementById('kpi-cr-pitched-excl-sub').textContent=crSub(pitchedOnly,'pitched');
+
+  // Synth section
+  document.getElementById('synth-section').style.display=calls.length?'block':'none';
+  // Load cached synth for current filter combo
+  var synthKey=getSynthKey(calls);
+  var cached=loadSynth(synthKey);
+  var sc=document.getElementById('synth-content');
+  if(sc){
+    if(cached&&cached.strengths&&cached.strengths.length&&cached.strengths[0]!=='...'){
+      renderFeedbackBox('synth-content',cached.strengths,cached.improvements);
+      document.getElementById('btn-synth').textContent='Refresh insights';
+    } else {
+      sc.innerHTML='<span style="font-size:13px;color:var(--muted)">Click \"Generate insights\" to synthesize top strengths and improvements across the filtered calls.</span>';
+      document.getElementById('btn-synth').textContent='Generate insights';
+    }
+  }
+
+  // Aggregate scores
+  var aggEl=document.getElementById('agg-section');
+  if(calls.length){
+    aggEl.style.display='block';
+    var avgScores={};
+    SCORE_KEYS.forEach(function(k){avgScores[k]=Math.round(calls.reduce(function(s,c){return s+((c.scores&&c.scores[k])||0);},0)/calls.length*10)/10;});
+    avgScores[EQ_KEY]=Math.round(calls.reduce(function(s,c){return s+((c.scores&&c.scores[EQ_KEY])||0);},0)/calls.length*10)/10;
+    renderScoreGrid('agg-scores',avgScores);
+    var avgPhases={};
+    PHASE_KEYS.forEach(function(k){avgPhases[k]=Math.round(calls.reduce(function(s,c){return s+((c.phases&&c.phases[k])||0);},0)/calls.length);});
+    renderPhaseGrid('agg-phases',avgPhases,'min avg');
+  }else{
+    aggEl.style.display='none';
+  }
+
+  // Table
+  var list=document.getElementById('calls-list');
+  if(!calls.length){
+    list.innerHTML='<div class="empty-state">No calls match your filters.</div>';
+  } else {
+  var typeLbl={pitched:'Pitched',not_pitched:'Not Pitched',fdq:'FDQ',no_show:'No Show'};
+  var typeCls={pitched:'badge-pitched',not_pitched:'badge-fdq',fdq:'badge-fdq',no_show:'badge-no'};
+  var outLbl={closed:'Closed',no_close:'No close',follow_up:'Follow up',unknown:'Unknown'};
+  var outCls={closed:'badge-closed',no_close:'badge-no',follow_up:'badge-follow',unknown:'badge-unknown'};
+  var totalCash=0,totalRev=0,totalComm2=0;
+  var rows=calls.map(function(c){
+      var a=avgScore(c.scores);
+      var sc=a>=45?'var(--success)':a>=30?'var(--warn)':'var(--danger)';
+      var dt=new Date(c.timestamp).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'2-digit'});
+      var ot=(c.outcome||'unknown').toLowerCase();
+      var ct=c.callType||'pitched';
+      // Commission = commission on first payment (if in range) + passive installments in range
+      var comm2=0;
+      var cDate=(c.dateClosed||c.timestamp||'').substring(0,10);
+      var firstInRange=noDateFilter||(cDate>=rangeStart&&cDate<=rangeEnd);
+      // First payment commission
+      if(firstInRange){
+        comm2+=(c.cashCollected||0)*(c.comm||0)/100;
+      }
+      // Passive installments commission in range
+      projectInstallments(c).forEach(function(r){
+        if(r.first) return;
+        var inRange=noDateFilter?(r.date<=todayISO):(r.date>=rangeStart&&r.date<=rangeEnd);
+        if(inRange) comm2+=r.commission;
+      });
+      // Cash/Revenue totals in the footer only count a call's first payment when its closed
+      // date actually falls in the selected period — same rule the Commission column uses —
+      // so all three footer totals describe the same period consistently.
+      if(firstInRange){
+        totalCash+=c.cashCollected||0;
+        totalRev+=c.generatedRevenue||0;
+      }
+      totalComm2+=comm2;
+      var checked=selectedCallIds.has(c.id)?' checked':'';
+      return '<tr onclick="openModal('+c.id+')">'
+        +'<td onclick="event.stopPropagation()"><input type="checkbox" '+checked+' onchange="toggleCallSelect('+c.id+',this.checked)"></td>'
+        +'<td style="color:var(--muted);white-space:nowrap">'+dt+'</td>'
+        +'<td style="font-weight:500">'+c.account+'</td>'
+        +'<td>'+(c.client||'—')+'</td>'
+        +'<td><span style="font-weight:600;color:'+sc+'">'+a+'/60</span></td>'
+        +'<td>'+fmtMoney(c.cashCollected)+'</td>'
+        +'<td>'+fmtMoney(c.generatedRevenue)+'</td>'
+        +'<td style="color:var(--success);font-weight:500">'+(comm2?'$'+Math.round(comm2).toLocaleString():'—')+'</td>'
+        +(c.transcript&&c.transcript.length>100?'<td><span class="badge badge-rescored" title="Transcript stored">✓</span></td>':'<td><span class="badge badge-unscored" title="No transcript stored">?</span></td>')+'<td><span class="badge '+(typeCls[ct]||'badge-fdq')+'">'+(typeLbl[ct]||ct)+'</span> <span class="badge '+(outCls[ot]||'badge-unknown')+'">'+(outLbl[ot]||ot)+'</span></td>'
+        +'<td>'+(c.fathom&&c.fathom.url?'<a href="'+c.fathom.url+'" target="_blank" onclick="event.stopPropagation()" style="font-size:11px;color:var(--accent-mid)">▶</a>':'')+'</td>'
+        +'</tr>';
+    }).join('');
+  var tfootRow='<tr style="border-top:2px solid var(--border-md);font-weight:700;background:var(--surface2)">'
+    +'<td colspan="6" style="padding:10px 12px;font-size:12px;letter-spacing:.05em">TOTALS</td>'
+    +'<td style="padding:10px 12px">$'+totalCash.toLocaleString()+'</td>'
+    +'<td style="padding:10px 12px">$'+totalRev.toLocaleString()+'</td>'
+    +'<td style="padding:10px 12px;color:var(--success)">$'+Math.round(totalComm2).toLocaleString()+'</td>'
+    +'<td colspan="2"></td>'
+    +'</tr>';
+  list.innerHTML='<table class="calls-table"><thead><tr><th style="width:28px"></th><th>Date</th><th>Account</th><th>Client</th><th>Score</th><th>Cash</th><th>Revenue</th><th>Commission</th><th title="Score calibration">Cal.</th><th>Type / Outcome</th><th></th></tr></thead><tbody>'+rows+'</tbody><tfoot>'+tfootRow+'</tfoot></table>';
+  } // end calls.length check
+
+  // Objections ranking
+  var objPatterns=[
+    {label:'Price / too expensive',    keys:['expensive','price','too much','afford','budget','cost','high','money','invest','financial','can\'t pay','£','$','canadian','usd']},
+    {label:'Need to think / not sure', keys:['think about it','not sure','need time','let me think','consider','unsure','hesitant','not ready','maybe','i\'ll get back']},
+    {label:'Spouse / partner approval',keys:['husband','wife','partner','spouse','significant other','together','my husband','my wife','talk to']},
+    {label:'Financial hardship',        keys:['no money','broke','can\'t afford','disability','church','student','debt','loan','tight','no funds','no budget','unemployed']},
+    {label:'Payment / card issues',    keys:['card','klarna','sunbit','split','payment failed','limit','declined','no credit','debit','bank']},
+    {label:'Already tried coaching',   keys:['tried before','previous coach','didn\'t work','had a coach','already done','failed before','worked with']},
+    {label:'Need more info / research',keys:['more information','research','compare','other options','other coaches','shopping around','looking at']},
+    {label:'Time / schedule',          keys:['no time','too busy','schedule','time commitment','vacation','holiday','away','travel','busy']},
+    {label:'Not enough pain / urgency',keys:['not that bad','fine right now','not urgent','don\'t really need','manage on my own','okay without']},
+    {label:'Online / remote concern',  keys:['online','remote','prefer in person','zoom','virtual','screen','not tech']}
+  ];
+  var objCounts={};
+  objPatterns.forEach(function(p){objCounts[p.label]=0;});
+  var filteredCalls=getFiltered();
+  filteredCalls.forEach(function(c){
+    var text=((c.transcript||'')+' '+(c.improvements||[]).join(' ')+' '+(c.strengths||[]).join(' ')).toLowerCase();
+    objPatterns.forEach(function(p){
+      var hit=p.keys.some(function(k){return text.indexOf(k)>=0;});
+      if(hit) objCounts[p.label]++;
+    });
+  });
+  var objSorted=Object.keys(objCounts).map(function(k){return {label:k,count:objCounts[k]};})
+    .filter(function(o){return o.count>0;})
+    .sort(function(a,b){return b.count-a.count;});
+  var objEl=document.getElementById('objections-list');
+  if(objSorted.length){
+    var maxCount=objSorted[0].count;
+    objEl.innerHTML=objSorted.map(function(o,i){
+      var pct=Math.round(o.count/filteredCalls.length*100);
+      var barW=Math.round(o.count/maxCount*100);
+      return '<div style="margin-bottom:10px">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">'
+        +'<span style="font-size:13px;font-weight:500">'+(i+1)+'. '+o.label+'</span>'
+        +'<span style="font-size:12px;color:var(--muted);font-weight:600">'+o.count+'x &nbsp;'+pct+'%</span>'
+        +'</div>'
+        +'<div style="height:7px;background:var(--border-md);border-radius:4px;overflow:hidden">'
+        +'<div style="height:100%;width:'+barW+'%;background:var(--accent);border-radius:4px;transition:width .3s"></div>'
+        +'</div>'
+        +'</div>';
+    }).join('');
+  } else {
+    objEl.innerHTML='<span style="font-size:13px;color:var(--muted)">No objection data found for selected calls.</span>';
+  }
+
+  // Recurring payments table
+  var recurringEl=document.getElementById('recurring-section');
+  var recurringList=document.getElementById('recurring-list');
+  var recurringRows=[];
+  // Show recurring payments for all closed calls with a recorded installment count (incl. 1/1 paid-in-full deals)
+  allClosed.forEach(function(c){
+    if(fa&&c.account!==fa) return;
+    if(!c.installments||c.installments<1) return;
+    var insts=projectInstallments(c);
+    if(!insts.length) return;
+    insts.forEach(function(r,i){
+      var inRange=noDateFilter?(r.date<=todayISO):(r.date>=rangeStart&&r.date<=rangeEnd);
+      if(!inRange) return;
+      var instNum=i+1;
+      recurringRows.push({
+        account:c.account,
+        client:c.client||'—',
+        instNum:instNum,
+        instTotal:c.installments,
+        amount:r.amount,
+        commission:r.commission,
+        month:r.month,
+        first:r.first
+      });
+    });
+  });
+  if(recurringRows.length){
+    recurringEl.style.display='block';
+    var totalAmt=recurringRows.reduce(function(s,r){return s+r.amount;},0);
+    var totalComm=recurringRows.reduce(function(s,r){return s+r.commission;},0);
+    // Total commission on all revenue generated (contracted value * comm rate)
+    var totalCommOnRev=0;
+    allClosed.forEach(function(c){
+      if(fa&&c.account!==fa) return;
+      totalCommOnRev+=(c.generatedRevenue||0)*(c.comm||0)/100;
+    });
+    var thead='<table style="width:100%;border-collapse:collapse;font-size:13px">'
+      +'<thead><tr style="color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.06em;border-bottom:1px solid var(--border-md)">'
+      +'<th style="text-align:left;padding:6px 8px">ACCOUNT</th>'
+      +'<th style="text-align:left;padding:6px 8px">CLIENT</th>'
+      +'<th style="text-align:left;padding:6px 8px">INSTALLMENT</th>'
+      +'<th style="text-align:left;padding:6px 8px">MONTH</th>'
+      +'<th style="text-align:right;padding:6px 8px">AMOUNT</th>'
+      +'<th style="text-align:right;padding:6px 8px">COMMISSION</th>'
+      +'</tr></thead><tbody>';
+    var tbody=recurringRows.map(function(r){
+      var lbl=new Date(r.month+'-15').toLocaleDateString('en-GB',{month:'short',year:'numeric'});
+      var badge=r.first
+        ?'<span style="font-size:10px;background:var(--accent-light);color:var(--accent);padding:2px 6px;border-radius:4px;font-weight:600">Active</span>'
+        :'<span style="font-size:10px;background:#f3f0ff;color:var(--purple);padding:2px 6px;border-radius:4px;font-weight:600">Passive</span>';
+      return '<tr style="border-bottom:1px solid var(--border)">'
+        +'<td style="padding:8px 8px;font-weight:600">'+r.account+'</td>'
+        +'<td style="padding:8px 8px">'+r.client+'</td>'
+        +'<td style="padding:8px 8px">'+badge+' '+r.instNum+'/'+r.instTotal+'</td>'
+        +'<td style="padding:8px 8px;color:var(--muted)">'+lbl+'</td>'
+        +'<td style="padding:8px 8px;text-align:right;font-weight:600">$'+r.amount.toLocaleString()+'</td>'
+        +'<td style="padding:8px 8px;text-align:right;color:var(--success);font-weight:600">$'+Math.round(r.commission).toLocaleString()+'</td>'
+        +'</tr>';
+    }).join('');
+    var tfoot='<tr style="border-top:2px solid var(--border-md);font-weight:700;background:var(--surface2)">'
+      +'<td colspan="4" style="padding:10px 8px;font-size:12px;font-weight:700;letter-spacing:.05em">TOTALS</td>'
+      +'<td style="padding:10px 8px;text-align:right;font-size:14px">$'+totalAmt.toLocaleString()+'</td>'
+      +'<td style="padding:10px 8px;text-align:right;font-size:14px;color:var(--success)">$'+Math.round(totalComm).toLocaleString()+'</td>'
+      +'</tr>'
+      +'<tr style="background:var(--surface2)">'
+      +'<td colspan="5" style="padding:6px 8px;font-size:12px;color:var(--muted)">Total commission on contracted revenue</td>'
+      +'<td style="padding:6px 8px;text-align:right;font-size:13px;color:var(--success);font-weight:600">$'+Math.round(totalCommOnRev).toLocaleString()+'</td>'
+      +'</tr>';
+    recurringList.innerHTML=thead+tbody+'</tbody><tfoot>'+tfoot+'</tfoot></table>';
+  }else{
+    recurringEl.style.display='none';
+  }
+
+  // Bonuses / manual adjustments
+  var adjEl=document.getElementById('adj-section');
+  var adjListEl=document.getElementById('adj-list');
+  if(adjInRange.length){
+    adjEl.style.display='block';
+    var adjRows=adjInRange.slice().sort(function(a,b){return (a.date<b.date)?1:-1;}).map(function(a){
+      var dt=new Date(a.date+'T12:00:00.000Z').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'2-digit'});
+      var amtColor=a.amount<0?'var(--danger)':'var(--success)';
+      var amtStr=(a.amount<0?'-$':'$')+Math.abs(Math.round(a.amount)).toLocaleString();
+      return '<tr>'
+        +'<td style="padding:8px 8px;color:var(--muted);white-space:nowrap;font-size:13px">'+dt+'</td>'
+        +'<td style="padding:8px 8px;font-size:13px">'+a.label+'</td>'
+        +'<td style="padding:8px 8px;font-size:13px;color:var(--muted)">'+(a.account||'—')+'</td>'
+        +'<td style="padding:8px 8px;text-align:right;font-weight:600;color:'+amtColor+'">'+amtStr+'</td>'
+        +'<td style="padding:8px 8px;text-align:right;white-space:nowrap">'
+          +'<button class="btn-sm" style="padding:2px 8px;font-size:11px" onclick="openAdjModal('+a.id+')">Edit</button> '
+          +'<button class="btn-sm btn-danger" style="padding:2px 8px;font-size:11px" onclick="deleteAdjustment('+a.id+')">Delete</button>'
+        +'</td>'
+        +'</tr>';
+    }).join('');
+    adjListEl.innerHTML='<table style="width:100%;border-collapse:collapse"><thead><tr style="text-align:left;font-size:11px;color:var(--muted);border-bottom:1px solid var(--border-md)">'
+      +'<th style="padding:6px 8px">Date</th><th style="padding:6px 8px">Description</th><th style="padding:6px 8px">Account</th><th style="padding:6px 8px;text-align:right">Amount</th><th></th></tr></thead>'
+      +'<tbody>'+adjRows+'</tbody>'
+      +'<tfoot><tr style="border-top:2px solid var(--border-md);font-weight:700;background:var(--surface2)">'
+      +'<td colspan="3" style="padding:8px;font-size:12px">TOTAL</td>'
+      +'<td style="padding:8px;text-align:right;color:var(--success)">$'+Math.round(adjTotal).toLocaleString()+'</td><td></td>'
+      +'</tr></tfoot></table>';
+  } else {
+    adjEl.style.display='none';
+  }
+}
+
+function resetFilters(){
+  ['f-account','f-type','f-client','f-date-from','f-date-to'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  renderDashboard();
+}
+
+// MODAL
+function openModal(id){
+  var c=loadCalls().find(function(x){return x.id===id;});
+  if(!c) return;
+  openCallId=id;
+  var dt=new Date(c.timestamp).toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'});
+  document.getElementById('m-title').textContent=(c.client||'Unknown')+' — '+c.account;
+  document.getElementById('m-meta').textContent=dt+' · '+c.closer+' · '+({pitched:'Pitched',not_pitched:'Not Pitched',fdq:'FDQ',no_show:'No Show'}[c.callType]||c.callType);
+  var fEl=document.getElementById('m-fathom');
+  if(c.fathom&&c.fathom.url){fEl.innerHTML='<a href="'+c.fathom.url+'" target="_blank">▶ Watch recording</a>'+(c.fathom.attendees?' · '+c.fathom.attendees:'');fEl.style.display='block';}
+  else fEl.style.display='none';
+  var a=avgScore(c.scores);
+  var remaining=c.generatedRevenue&&c.installments>1?c.generatedRevenue-c.cashCollected:0;
+  document.getElementById('m-overall').innerHTML=
+    '<div class="stat"><div class="stat-label">Total score</div><div class="stat-val" style="color:var(--accent)">'+a+' / 60</div></div>'
+    +'<div class="stat"><div class="stat-label">Cash collected</div><div class="stat-val" style="color:var(--success)">'+fmtMoney(c.cashCollected)+'</div></div>'
+    +'<div class="stat"><div class="stat-label">Revenue generated</div><div class="stat-val">'+fmtMoney(c.generatedRevenue)+'</div></div>'
+    +'<div class="stat"><div class="stat-label">Remaining</div><div class="stat-val" style="color:var(--purple)">'+fmtMoney(remaining)+'</div></div>'
+    +'<div class="stat"><div class="stat-label">Installments</div><div class="stat-val">'+(c.installments||'—')+'</div></div>'
+    +'<div class="stat"><div class="stat-label">Commission</div><div class="stat-val" style="color:var(--success)">'+fmtMoney(c.cashCollected?Math.round(c.cashCollected*c.comm/100):0)+'</div></div>';
+  renderScoreGrid('m-scores',c.scores||{},true);
+  renderPhaseGrid('m-phases',c.phases||{});
+  renderFeedbackBox('m-feedback',c.strengths,c.improvements);
+  var hasTranscript=c.transcript&&c.transcript.length>50;
+  document.getElementById('m-transcript-status').textContent=hasTranscript?'('+c.transcript.length+' characters stored)':'(none stored)';
+  document.getElementById('m-transcript-box').textContent=hasTranscript?c.transcript:'No transcript stored for this call.';
+  document.getElementById('m-transcript-box').style.maxHeight='0';
+  document.getElementById('m-transcript-toggle').textContent='Show transcript';
+  // Pre-fill update fields
+  var ot=(c.outcome||'unknown').toLowerCase();
+  var mout=document.getElementById('m-outcome');
+  for(var i=0;i<mout.options.length;i++) mout.options[i].selected=mout.options[i].value===ot;
+  document.getElementById('m-call-date').value=c.timestamp?c.timestamp.substring(0,10):'';
+  document.getElementById('m-date-closed').value=c.dateClosed||'';
+  document.getElementById('m-cash').value=c.cashCollected||'';
+  document.getElementById('m-revenue').value=c.generatedRevenue||'';
+  document.getElementById('m-installments').value=c.installments||'';
+  document.getElementById('m-refund').value=c.refund||'';
+  document.getElementById('m-comm').value=(c.comm||c.comm===0)?c.comm:'';
+  document.getElementById('m-status').textContent='';
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModalOverlay(e){if(e.target.id==='modal') document.getElementById('modal').classList.remove('open');}
+
+function toggleTranscriptView(){
+  var box=document.getElementById('m-transcript-box');
+  var btn=document.getElementById('m-transcript-toggle');
+  var isOpen=box.style.maxHeight!=='0px'&&box.style.maxHeight!=='0';
+  if(isOpen){
+    box.style.maxHeight='0';
+    btn.textContent='Show transcript';
+  } else {
+    box.style.maxHeight='400px';
+    box.style.overflowY='auto';
+    btn.textContent='Hide transcript';
+  }
+}
+
+async function reanalyzeCall(){
+  var apiKey=getApiKey()||'claude';
+  if(!apiKey){uiAlert('Enter your API key in the Analyze tab first.');return;}
+  var calls=loadCalls();
+  var c=calls.find(function(x){return x.id===openCallId;});
+  if(!c) return;
+  var statusEl=document.getElementById('m-reanalyze-status');
+  statusEl.textContent='Analyzing...';
+  var isNoPitch=c.callType==='not_pitched'||c.callType==='no_show';
+  var system='You are an expert sales coach. Return ONLY valid JSON, no markdown.\n\n{\n  "scores":{"call_control":<0-10>,"discovery_depth":<0-10>,"belief_shifting":<0-10>,"objection_handling":<0-10>,"pitch_effectiveness":<0-10>,"closing_strength":<0-10>,"eq_in_closing":<0-10>},\n  "strengths":["<strength1>","<strength2>","<strength3>"],\n  "improvements":["<improvement1>","<improvement2>","<improvement3>"]\n}\n\n'+(isNoPitch?'No pitch was made. Score accordingly.\n\n':'');
+  var callContent=c.transcript&&c.transcript.length>50
+    ?'Transcript:\n'+c.transcript.substring(0,8000)
+    :'Call data:\nClient: '+(c.client||'')+'\nOutcome: '+(c.outcome||'')+'\nCall type: '+(c.callType||'')+'\nStrengths: '+(c.strengths||[]).join('; ')+'\nImprovements: '+(c.improvements||[]).join('; ');
+  try{
+    var resp=await anthropicFetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,system:system,
+        messages:[{role:'user',content:'Example 1 of 2 -- Ben Vering (weak call, did not close, 31/60):\\n'+'Impromptu Google Meet Meeting - June 10\nBen Vering - AlwaysCoach - Pitched - Follow up\n\n0:34 - Giulia: Good morning. I work with Dylan. My role is to see whether we can help you, and then walk you through the program if we can. Do you have the full hour?\n1:24 - Ben: I\'ve been following him for two or three years. Pretty educational. Always been interested in getting a nutritionist.\n1:53 - Ben: Just been taking my diet more seriously. I\'m on day 67 of 75 Hard, lost about 25 pounds. It\'s harder now to get lean.\n3:49 - Ben: Beach body ready. I\'m six four, started at 240, now 216. I don\'t really know how much more weight I need to lose.\n8:26 - Ben: I don\'t really know. I just figured I would try it out, something new.\n18:01 - Ben: It\'s just a nice to have, really. I just want to lose weight. It wasn\'t really that deep to me.\n19:42 - Giulia: I\'m not entirely sure you\'re 100% a good fit. This does seem like a nice to have.\n21:03 - Giulia: Nothing below $400 a month.\n21:08 - Ben: That\'s around what I\'d expect.\n31:39 - Ben: Do I have to make a decision today? I wanted to sleep on it.\n31:54 - Ben: I want to shop around a little bit to see what my options are.\n33:21 - Ben: I just decided to reach out to Dylan about eight hours ago. I\'m not ready to put a payment down today.\n35:16 - Ben: I\'m satisfied with my own progress but I think I could step to the next level with a nutritionist.\n45:57 - Ben: I\'d probably be in contact soon.\n46:14 - Giulia: Just reach back out whenever you\'re ready.'},{role:'assistant',content:'[{"index":1,"closer_name":"Giulia Sodaro","client_name":"Ben Vering","generated_revenue":0,"cash_collected":0,"installments":0,"outcome":"follow_up","scores":{"call_control":7,"discovery_depth":5,"belief_shifting":4,"objection_handling":6,"pitch_effectiveness":5,"closing_strength":4,"eq_in_closing":4},"phases":{"opener":2,"discovery":20,"pitch":8,"objection_handling":12,"close":5},"strengths":["Maintained call control and frame throughout despite a low-urgency, vague prospect","Surfaced real context: deployment, military background, injury history, financial improvement, going into cutting blind","Engaged the shop-around objection with multiple angles and persistence"],"improvements":["Discovery accepted the prospect\'s own framing -- it\'s just a nice to have was never probed for a deeper emotional driver","Pitch was a standard 3-step walkthrough; only briefly connected to what the prospect actually said was his problem (going into cutting blind)","Call ended passively -- reach out whenever you\'re ready with no specific next step, date, or commitment secured"]}]'},{role:'user',content:'Example 2 of 2 -- Amber Dobson (strong call, closed $2300, 49/60):\\n'+'Amber Dobson -  Mobility Consultation - May 17\nVIEW RECORDING - 76 mins (No highlights): \n\n---\n\n0:00 - Amber\n  Can hear me and see me okay? This meeting is being recorded.\n\n0:03 - Giulia Sodaro (movesmethod.com)\n  Perfect. So welcome to the call. My name is Giulia and I\'m one of the mobility consultants here at Moves Method.\n\n0:12 - Amber\n  Are you good to go for the full 45 minutes? Yeah.\n\n0:17 - Giulia Sodaro (movesmethod.com)\n  Perfect. All right. So I know you spoke with my colleague on the phone.\n\n0:22 - Amber\n  Was it Ryan? Is that right?\n\n0:24 - Giulia Sodaro (movesmethod.com)\n  I so. Yeah. Perfect. So we have drafted an initial assessment based on your conversation with Ryan so that I can also have been like be a little bit more prepared for our conversation today.  I can see how the primary areas of concern are the lower back, the right hip, the armstrings, all likely connected through the same underlying pattern.  So the hip joint appears to have lost stability over time. The body has responded by tensing the surrounding muscles, including the armstrings, to compensate.  So that tension then pulls the lower back, creating the persistent aches that you are describing. So long hours sitting at your desk, I see you work from home, the hip flexors shorten, the glutes switch off, and yeah, the whole back end of the body just stops doing its job.\n\n1:21 - Amber\n  So, yeah.\n\n1:24 - Giulia Sodaro (movesmethod.com)\n  Okay.\n\n1:24 - Amber\n  So, can I add, Giulia, I neglected to mention, and so I\'ve done two days of the movements, and it kind of reminded me that my right knee is also problematic, that I\'ve just lived with it for so long, I don\'t even think about it anymore.  But as I\'m doing the moves, I was like, oh, I forgot to mention, my right knee has stiffness too.  So right hip, right knee, and they\'re all probably connected.\n\n1:53 - Giulia Sodaro (movesmethod.com)\n  Yeah, yeah, it makes sense. I mean, you know, it does not surprise me. I lots of people who have\n\n[...transcript continues...]\n\nut in the time and the work, I don\'t see why that would happen.\n\n1:11:31 - Amber\n  Right. Okay, I\'m just looking through.\n\n1:11:38 - Giulia Sodaro (movesmethod.com)\n  Yeah, take your time. I still have like 10 minutes or so.\n\n1:11:43 - Amber\n  Don\'t start the program within 70. Okay. Okay. Okay, I signed.\n\n1:13:43 - Giulia Sodaro (movesmethod.com)\n  Perfect. Let me see if I see it on my end. It\'s not showing up, but I\'m sure that will.  Yeah, probably slow. Like I see it, I see it in the system at send. So yeah. Okay. So I\'m excited for you to feel the best version of yourself and I hope to see you succeed.\n\n1:14:20 - Amber\n  Yeah.\n\n1:14:22 - Giulia Sodaro (movesmethod.com)\n  Okay. Yeah. So have a good rest of the day and reach out to me. You have my email and also like if you send us a DM, we will see that in case you have any issues in like say like the first steps before you actually start.  And on my end, I\'ll make sure that you get a kick- female coach.\n  ACTION ITEM: Confirm Amber\'s onboarding agreement processed; then trigger onboarding emails - WATCH: https://fathom.video/calls/676091348?timestamp=4480.9999\n\n1:14:44 - Amber\n  Yeah. So am I going to get like an email communication with the next steps?\n\n1:14:51 - Giulia Sodaro (movesmethod.com)\n  Okay. Yeah. You\'re going to get like, that\'s why I was checking if the agreement was coming back because that triggers from that.  But again, it\'s... So let me just get like through the back end on our end to make sure everything is working well.\n  ACTION ITEM: Process refund for Amber\'s White Belt/Levels training - WATCH: https://fathom.video/calls/676091348?timestamp=4504.9999  But you will see different emails for the onboarding instructions and how to actually access the platform.\n\n1:15:14 - Amber\n  Okay, great. And then you\'ll look into that refund for the levels.\n\n1:15:19 - Giulia Sodaro (movesmethod.com)\n  Yes, absolutely.\n\n1:15:20 - Amber\n  Yeah. Okay, great. Okay. All right. Well, thank you so much.\n\n1:15:25 - Giulia Sodaro (movesmethod.com)\n  Thank you, Amber.\n\n1:15:25 - Amber\n  Yeah, have a good day.\n\n1:15:27 - Giulia Sodaro (movesmethod.com)\n  Bye.\n\n1:15:28 - Amber\n  Hopefully I\'ll see you again sometime and touch my toes.\n\n1:15:31 - Giulia Sodaro (movesmethod.com)\n  to see you in better shape and touching your toes, yeah.\n\n1:15:35 - Amber\n  Right, exactly.\n\n1:15:36 - Giulia Sodaro (movesmethod.com)\n  Bye.\n\n1:15:37 - Amber\n  Okay, have a good day.\n\n1:15:38 - Giulia Sodaro (movesmethod.com)\n  Bye.'},{role:'assistant',content:'[{"index":1,"closer_name":"Giulia Sodaro","client_name":"Amber Dobson","generated_revenue":2300,"cash_collected":2300,"installments":1,"outcome":"closed","scores":{"call_control":8,"discovery_depth":9,"belief_shifting":9,"objection_handling":8,"pitch_effectiveness":7,"closing_strength":8,"eq_in_closing":9},"phases":{"opener":3,"discovery":28,"pitch":12,"objection_handling":8,"close":5},"strengths":["Deep discovery surfacing emotional drivers including identity, independence, and specific life impact","Strong belief shifting -- prospect acknowledged new perspectives on her situation and what coaching could offer","Warm and emotionally attuned throughout -- genuine connection established and maintained to close"],"improvements":["Pitch could have been more tightly connected to specific discovered pain points rather than following a standard walkthrough","A few moments where prospect questions could have been probed one level deeper","Minor pacing issues in the close where silence could have been held longer to let the decision land"]}]'},{role:'user',content:'Score this call the same way. Return ONLY a JSON array with one object.\\n\\n=== CALL 1 ===\\n'+callContent}]
+      })
+    });
+    var data=await resp.json();
+    if(data.error) throw new Error(data.error.message);
+    var text=data.content.map(function(b){return b.text||'';}).join('');
+    var s=text.indexOf('{'),e=text.lastIndexOf('}');
+    var parsed=JSON.parse(text.substring(s,e+1));
+    c.scores=parsed.scores||c.scores;
+    c.strengths=parsed.strengths||c.strengths;
+    c.improvements=parsed.improvements||c.improvements;
+    saveCalls(calls);
+    statusEl.textContent='Done.';
+    openModal(c.id);
+  }catch(err){
+    statusEl.style.color='var(--danger)';
+    statusEl.textContent='Error: '+err.message;
+    console.warn('Re-analyze error:',err);
+  }
+}
+
+function updateCall(){
+  var calls=loadCalls();
+  var c=calls.find(function(x){return x.id===openCallId;});
+  if(!c) return;
+  var newOutcome=document.getElementById('m-outcome').value;
+  var newCallDate=document.getElementById('m-call-date').value;
+  var dateClosed=document.getElementById('m-date-closed').value;
+  var newCash=parseFloat(document.getElementById('m-cash').value)||0;
+  var newRevenue=parseFloat(document.getElementById('m-revenue').value)||0;
+  var newInst=parseInt(document.getElementById('m-installments').value)||1;
+  var refundAmt=parseFloat(document.getElementById('m-refund').value)||0;
+  var newCommRaw=document.getElementById('m-comm').value;
+  c.outcome=newOutcome;
+  if(newCallDate) c.timestamp=newCallDate+'T12:00:00.000Z';
+  if(dateClosed){c.dateClosed=dateClosed;if(newOutcome==='closed'&&!newCallDate) c.timestamp=dateClosed+'T12:00:00.000Z';}
+  var effRefund=Math.min(refundAmt,newRevenue);
+  c.generatedRevenue=newRevenue-effRefund;
+  c.cashCollected=effRefund>=newRevenue?0:newCash;
+  c.installments=newInst;
+  c.refund=effRefund;
+  if(newCommRaw!==''){
+    var newComm=parseFloat(newCommRaw);
+    if(!isNaN(newComm)&&newComm!==c.comm){
+      c.comm=newComm;
+      c.program='manual'; // rate no longer matches a preset tier, so drop the old program tag
+    }
+  }
+  saveCalls(calls);
+  setStatus('m-status','Updated ✓','success');
+  renderDashboard();
+}
+
+async function deleteCall(){
+  if(!openCallId||!(await uiConfirm('Delete this call?'))) return;
+  saveCalls(loadCalls().filter(function(c){return c.id!==openCallId;}));
+  document.getElementById('modal').classList.remove('open');
+  renderDashboard();
+}
+
+// SYNTH CACHE
+function getSynthKey(calls){
+  var ids=calls.map(function(c){return c.id;}).sort().join(',');
+  return 'synth_'+ids.substring(0,200);
+}
+function loadSynth(key){try{var d=localStorage.getItem(key);return d?JSON.parse(d):null;}catch(e){return null;}}
+function saveSynth(key,data){try{localStorage.setItem(key,JSON.stringify(data));}catch(e){}}
+
+// SYNTHESIZE FEEDBACK
+function synthesizeFeedback(){
+  var calls=getFiltered();
+  if(!calls.length) return;
+  var btn=document.getElementById('btn-synth');
+  var allS=[], allI=[];
+  calls.forEach(function(c){
+    (c.strengths||[]).forEach(function(s){if(s&&s!=='...') allS.push(s);});
+    (c.improvements||[]).forEach(function(i){if(i&&i!=='...') allI.push(i);});
+  });
+  if(!allS.length&&!allI.length){
+    document.getElementById('synth-content').textContent='No strengths or improvements stored for these calls yet. Import or analyze calls first.';
+    return;
+  }
+  // Find recurring themes by keyword frequency
+  function extractThemes(items, topN){
+    // Score each item by how many keywords it shares with others
+    var keywords=[
+      'discovery','rapport','emotional','close','objection','pitch','EQ','belief','commitment',
+      'accountability','follow','urgency','trust','pain','financial','nervous','structure',
+      'reframe','process','transparency','consistent','anchor','pattern','mindset','control'
+    ];
+    var scores=items.map(function(item){
+      var score=0;
+      var lower=item.toLowerCase();
+      keywords.forEach(function(k){ if(lower.indexOf(k.toLowerCase())>=0) score++; });
+      // Also score by how many other items share at least one keyword
+      items.forEach(function(other){
+        if(other===item) return;
+        var otherLower=other.toLowerCase();
+        keywords.forEach(function(k){
+          if(lower.indexOf(k.toLowerCase())>=0&&otherLower.indexOf(k.toLowerCase())>=0) score++;
+        });
+      });
+      return {item:item,score:score};
+    });
+    scores.sort(function(a,b){return b.score-a.score;});
+    // Deduplicate — skip items too similar to already picked ones
+    var picked=[];
+    scores.forEach(function(s){
+      if(picked.length>=topN) return;
+      var tooSimilar=picked.some(function(p){
+        var words=s.item.toLowerCase().split(' ').filter(function(w){return w.length>5;});
+        var matches=words.filter(function(w){return p.toLowerCase().indexOf(w)>=0;});
+        return matches.length>=2;
+      });
+      if(!tooSimilar) picked.push(s.item);
+    });
+    // Pad if needed
+    scores.forEach(function(s){
+      if(picked.length>=topN) return;
+      if(picked.indexOf(s.item)<0) picked.push(s.item);
+    });
+    return picked.slice(0,topN);
+  }
+  var top3S=extractThemes(allS,3);
+  var top3I=extractThemes(allI,3);
+  var result={strengths:top3S,improvements:top3I};
+  renderFeedbackBox('synth-content',result.strengths,result.improvements);
+  saveSynth(getSynthKey(calls),result);
+  btn.textContent='Refresh insights';
+}
+
+// EXPORT / IMPORT
+function cleanDuplicates(){
+  var calls=loadCalls();
+  var before=calls.length;
+  // Remove any records with fake IDs I generated (174xxx range from bad import)
+  var cleaned=calls.filter(function(c){return !String(c.id).startsWith('174');});
+  saveCalls(cleaned);
+  uiAlert('Removed '+(before-cleaned.length)+' duplicate records. '+cleaned.length+' calls remain.');
+  renderDashboard();
+}
+function debugMissing(){
+  var calls=JSON.parse(localStorage.getItem('sales_calls')||'[]');
+  var missing=calls.filter(function(c){return !c.strengths||!c.strengths.length;});
+  if(!missing.length){uiAlert('All calls have strengths/improvements.');return;}
+  var report=missing.map(function(c){
+    return (c.client||'Unknown')+': transcript='+(c.transcript?c.transcript.length+'chars':'NONE')+', feedback='+(c.feedback?'YES':'NONE');
+  }).join('\n');
+  uiAlert(missing.length+' calls missing strengths:\n'+report);
+}
+async function calibrateScores(){
+  if(!(await uiConfirm('Apply calibration to all stored scores? This will adjust scores up based on the rubric comparison and cannot be undone without a backup.'))) return;
+  var deltas={
+    call_control:2,
+    discovery_depth:2,
+    belief_shifting:1,
+    objection_handling:1,
+    pitch_effectiveness:2,
+    closing_strength:2,
+    eq_in_closing:0
+  };
+  var calls=loadCalls();
+  var updated=0;
+  calls.forEach(function(c){
+    if(!c.scores) return;
+    Object.keys(deltas).forEach(function(k){
+      if(typeof c.scores[k]==='number'){
+        c.scores[k]=Math.min(10, c.scores[k]+deltas[k]);
+      }
+    });
+    updated++;
+  });
+  saveCalls(calls);
+  uiAlert('Calibrated '+updated+' calls. Export a backup if needed.');
+  renderDashboard();
+}
+
+async function rescoreAll(){
+  var apiKey=getApiKey()||'claude';
+  if(!apiKey){uiAlert('Enter your API key in the Analyze tab first.');return;}
+  var allCalls=loadCalls();
+  var withTranscripts=allCalls.filter(function(c){return c.transcript&&c.transcript.length>100;});
+  var missing=allCalls.length-withTranscripts.length;
+  if(!withTranscripts.length){uiAlert('No calls with stored transcripts found.');return;}
+  if(!(await uiConfirm('Re-score '+withTranscripts.length+' calls with stored transcripts (~'+Math.ceil(withTranscripts.length/5)+' API calls)?'+(missing?' '+missing+' calls without transcripts will be skipped and flagged.':'')))) return;
+  await runRescoreBatches(withTranscripts, allCalls, apiKey);
+}
+
+async function rescoreSelected(){
+  var apiKey=getApiKey()||'claude';
+  if(!apiKey){uiAlert('Enter your API key in the Analyze tab first.');return;}
+  if(!selectedCallIds.size){uiAlert('Select at least one call using the checkboxes in the table first.');return;}
+  var allCalls=loadCalls();
+  var subset=allCalls.filter(function(c){return selectedCallIds.has(c.id);});
+  if(!(await uiConfirm('Re-score '+subset.length+' selected call(s) with the updated rubric (batched, ~'+Math.ceil(subset.length/5)+' API call(s))? This will overwrite existing scores, strengths and improvements for these calls only.'))) return;
+  await runRescoreBatches(subset, allCalls, apiKey);
+}
+
+async function runRescoreBatches(callsToScore, allCalls, apiKey){
+  var BATCH_SIZE=5;
+  var prog=document.createElement('div');
+  prog.style.cssText='position:fixed;bottom:20px;right:20px;background:#185FA5;color:#fff;padding:12px 18px;border-radius:12px;font-size:13px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.2)';
+  document.body.appendChild(prog);
+
+  var system='You are a sales coach. Score calls by returning ONLY valid JSON arrays — no markdown, no explanation. Each object in the array must have: index (integer), scores (object with 7 keys each 0-10: call_control, discovery_depth, belief_shifting, objection_handling, pitch_effectiveness, closing_strength, eq_in_closing), strengths (array of 3 strings), improvements (array of 3 strings). Use the example in the conversation to calibrate your scoring.\nYou will receive one or more calls in one request, each labeled with an index number and either a transcript or fallback call data. For each one, score it independently using the calibration above.\n\nReturn ONLY a valid JSON array, no markdown, one object per call IN THE SAME ORDER, each with this shape:\n{"index":<n>,"scores":{"call_control":<0-10>,"discovery_depth":<0-10>,"belief_shifting":<0-10>,"objection_handling":<0-10>,"pitch_effectiveness":<0-10>,"closing_strength":<0-10>,"eq_in_closing":<0-10>},"strengths":["<s1>","<s2>","<s3>"],"improvements":["<i1>","<i2>","<i3>"]}\n\nIf a call was not pitched (call type not_pitched or no_show), score accordingly — discovery/control/EQ can still be scored, but pitch_effectiveness and closing_strength should reflect that no pitch/close was attempted.\n';
+
+  var done=0, failed=0, errors=[];
+  for(var b=0;b<callsToScore.length;b+=BATCH_SIZE){
+    var batch=callsToScore.slice(b,b+BATCH_SIZE);
+    prog.textContent='Re-scoring batch '+(Math.floor(b/BATCH_SIZE)+1)+'/'+Math.ceil(callsToScore.length/BATCH_SIZE)+' ('+(b+1)+'-'+Math.min(b+BATCH_SIZE,callsToScore.length)+' of '+callsToScore.length+')...';
+    var userContent=batch.map(function(c,i){
+      var isNoPitch=c.callType==='not_pitched'||c.callType==='no_show';
+      var body=c.transcript&&c.transcript.length>50
+        ?'Transcript:\\n'+c.transcript.substring(0,6000)
+        :'Call data:\\nClient: '+(c.client||'')+'\\nOutcome: '+(c.outcome||'')+'\\nCall type: '+(c.callType||'')+'\\nStrengths: '+(c.strengths||[]).join('; ')+'\\nImprovements: '+(c.improvements||[]).join('; ');
+      return '=== CALL '+(i+1)+' ('+(isNoPitch?'not pitched':'pitched')+', client: '+(c.client||'unknown')+') ===\\n'+body;
+    }).join('\\n\\n');
+    var rawText='';
+    try{
+      var resp=await anthropicFetch('https://api.anthropic.com/v1/messages',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+        body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:4000,system:system,
+          messages:[{role:'user',content:'Example 1 of 2 -- Ben Vering (weak call, did not close, 31/60):\\n'+'Impromptu Google Meet Meeting - June 10\nBen Vering - AlwaysCoach - Pitched - Follow up\n\n0:34 - Giulia: Good morning. I work with Dylan. My role is to see whether we can help you, and then walk you through the program if we can. Do you have the full hour?\n1:24 - Ben: I\'ve been following him for two or three years. Pretty educational. Always been interested in getting a nutritionist.\n1:53 - Ben: Just been taking my diet more seriously. I\'m on day 67 of 75 Hard, lost about 25 pounds. It\'s harder now to get lean.\n3:49 - Ben: Beach body ready. I\'m six four, started at 240, now 216. I don\'t really know how much more weight I need to lose.\n8:26 - Ben: I don\'t really know. I just figured I would try it out, something new.\n18:01 - Ben: It\'s just a nice to have, really. I just want to lose weight. It wasn\'t really that deep to me.\n19:42 - Giulia: I\'m not entirely sure you\'re 100% a good fit. This does seem like a nice to have.\n21:03 - Giulia: Nothing below $400 a month.\n21:08 - Ben: That\'s around what I\'d expect.\n31:39 - Ben: Do I have to make a decision today? I wanted to sleep on it.\n31:54 - Ben: I want to shop around a little bit to see what my options are.\n33:21 - Ben: I just decided to reach out to Dylan about eight hours ago. I\'m not ready to put a payment down today.\n35:16 - Ben: I\'m satisfied with my own progress but I think I could step to the next level with a nutritionist.\n45:57 - Ben: I\'d probably be in contact soon.\n46:14 - Giulia: Just reach back out whenever you\'re ready.'},{role:'assistant',content:'[{"index":1,"closer_name":"Giulia Sodaro","client_name":"Ben Vering","generated_revenue":0,"cash_collected":0,"installments":0,"outcome":"follow_up","scores":{"call_control":7,"discovery_depth":5,"belief_shifting":4,"objection_handling":6,"pitch_effectiveness":5,"closing_strength":4,"eq_in_closing":4},"phases":{"opener":2,"discovery":20,"pitch":8,"objection_handling":12,"close":5},"strengths":["Maintained call control and frame throughout despite a low-urgency, vague prospect","Surfaced real context: deployment, military background, injury history, financial improvement, going into cutting blind","Engaged the shop-around objection with multiple angles and persistence"],"improvements":["Discovery accepted the prospect\'s own framing -- it\'s just a nice to have was never probed for a deeper emotional driver","Pitch was a standard 3-step walkthrough; only briefly connected to what the prospect actually said was his problem (going into cutting blind)","Call ended passively -- reach out whenever you\'re ready with no specific next step, date, or commitment secured"]}]'},{role:'user',content:'Example 2 of 2 -- Amber Dobson (strong call, closed $2300, 49/60):\\n'+'Amber Dobson -  Mobility Consultation - May 17\nVIEW RECORDING - 76 mins (No highlights): \n\n---\n\n0:00 - Amber\n  Can hear me and see me okay? This meeting is being recorded.\n\n0:03 - Giulia Sodaro (movesmethod.com)\n  Perfect. So welcome to the call. My name is Giulia and I\'m one of the mobility consultants here at Moves Method.\n\n0:12 - Amber\n  Are you good to go for the full 45 minutes? Yeah.\n\n0:17 - Giulia Sodaro (movesmethod.com)\n  Perfect. All right. So I know you spoke with my colleague on the phone.\n\n0:22 - Amber\n  Was it Ryan? Is that right?\n\n0:24 - Giulia Sodaro (movesmethod.com)\n  I so. Yeah. Perfect. So we have drafted an initial assessment based on your conversation with Ryan so that I can also have been like be a little bit more prepared for our conversation today.  I can see how the primary areas of concern are the lower back, the right hip, the armstrings, all likely connected through the same underlying pattern.  So the hip joint appears to have lost stability over time. The body has responded by tensing the surrounding muscles, including the armstrings, to compensate.  So that tension then pulls the lower back, creating the persistent aches that you are describing. So long hours sitting at your desk, I see you work from home, the hip flexors shorten, the glutes switch off, and yeah, the whole back end of the body just stops doing its job.\n\n1:21 - Amber\n  So, yeah.\n\n1:24 - Giulia Sodaro (movesmethod.com)\n  Okay.\n\n1:24 - Amber\n  So, can I add, Giulia, I neglected to mention, and so I\'ve done two days of the movements, and it kind of reminded me that my right knee is also problematic, that I\'ve just lived with it for so long, I don\'t even think about it anymore.  But as I\'m doing the moves, I was like, oh, I forgot to mention, my right knee has stiffness too.  So right hip, right knee, and they\'re all probably connected.\n\n1:53 - Giulia Sodaro (movesmethod.com)\n  Yeah, yeah, it makes sense. I mean, you know, it does not surprise me. I lots of people who have\n\n[...transcript continues...]\n\nut in the time and the work, I don\'t see why that would happen.\n\n1:11:31 - Amber\n  Right. Okay, I\'m just looking through.\n\n1:11:38 - Giulia Sodaro (movesmethod.com)\n  Yeah, take your time. I still have like 10 minutes or so.\n\n1:11:43 - Amber\n  Don\'t start the program within 70. Okay. Okay. Okay, I signed.\n\n1:13:43 - Giulia Sodaro (movesmethod.com)\n  Perfect. Let me see if I see it on my end. It\'s not showing up, but I\'m sure that will.  Yeah, probably slow. Like I see it, I see it in the system at send. So yeah. Okay. So I\'m excited for you to feel the best version of yourself and I hope to see you succeed.\n\n1:14:20 - Amber\n  Yeah.\n\n1:14:22 - Giulia Sodaro (movesmethod.com)\n  Okay. Yeah. So have a good rest of the day and reach out to me. You have my email and also like if you send us a DM, we will see that in case you have any issues in like say like the first steps before you actually start.  And on my end, I\'ll make sure that you get a kick- female coach.\n  ACTION ITEM: Confirm Amber\'s onboarding agreement processed; then trigger onboarding emails - WATCH: https://fathom.video/calls/676091348?timestamp=4480.9999\n\n1:14:44 - Amber\n  Yeah. So am I going to get like an email communication with the next steps?\n\n1:14:51 - Giulia Sodaro (movesmethod.com)\n  Okay. Yeah. You\'re going to get like, that\'s why I was checking if the agreement was coming back because that triggers from that.  But again, it\'s... So let me just get like through the back end on our end to make sure everything is working well.\n  ACTION ITEM: Process refund for Amber\'s White Belt/Levels training - WATCH: https://fathom.video/calls/676091348?timestamp=4504.9999  But you will see different emails for the onboarding instructions and how to actually access the platform.\n\n1:15:14 - Amber\n  Okay, great. And then you\'ll look into that refund for the levels.\n\n1:15:19 - Giulia Sodaro (movesmethod.com)\n  Yes, absolutely.\n\n1:15:20 - Amber\n  Yeah. Okay, great. Okay. All right. Well, thank you so much.\n\n1:15:25 - Giulia Sodaro (movesmethod.com)\n  Thank you, Amber.\n\n1:15:25 - Amber\n  Yeah, have a good day.\n\n1:15:27 - Giulia Sodaro (movesmethod.com)\n  Bye.\n\n1:15:28 - Amber\n  Hopefully I\'ll see you again sometime and touch my toes.\n\n1:15:31 - Giulia Sodaro (movesmethod.com)\n  to see you in better shape and touching your toes, yeah.\n\n1:15:35 - Amber\n  Right, exactly.\n\n1:15:36 - Giulia Sodaro (movesmethod.com)\n  Bye.\n\n1:15:37 - Amber\n  Okay, have a good day.\n\n1:15:38 - Giulia Sodaro (movesmethod.com)\n  Bye.'},{role:'assistant',content:'[{"index":1,"closer_name":"Giulia Sodaro","client_name":"Amber Dobson","generated_revenue":2300,"cash_collected":2300,"installments":1,"outcome":"closed","scores":{"call_control":8,"discovery_depth":9,"belief_shifting":9,"objection_handling":8,"pitch_effectiveness":7,"closing_strength":8,"eq_in_closing":9},"phases":{"opener":3,"discovery":28,"pitch":12,"objection_handling":8,"close":5},"strengths":["Deep discovery surfacing emotional drivers including identity, independence, and specific life impact","Strong belief shifting -- prospect acknowledged new perspectives on her situation and what coaching could offer","Warm and emotionally attuned throughout -- genuine connection established and maintained to close"],"improvements":["Pitch could have been more tightly connected to specific discovered pain points rather than following a standard walkthrough","A few moments where prospect questions could have been probed one level deeper","Minor pacing issues in the close where silence could have been held longer to let the decision land"]}]'},{role:'user',content:'Score these calls the same way. Return ONLY a valid JSON array, one object per call in order.\\n\\n'+userContent}]
+        })
+      });
+      var data=await resp.json();
+      if(data.error) throw new Error('API error: '+JSON.stringify(data.error));
+      rawText=data.content.map(function(t){return t.text||'';}).join('');
+      var s=rawText.indexOf('['),e=rawText.lastIndexOf(']');
+      if(s===-1||e===-1) throw new Error('No JSON array found in response. Raw (first 300 chars): '+rawText.substring(0,300));
+      var parsedArr;
+      try{
+        parsedArr=JSON.parse(rawText.substring(s,e+1));
+      }catch(parseErr){
+        var objMatches=rawText.match(/\\{[^{}]*"index"[^{}]*\\{[^{}]*\\}[^{}]*\\}/g);
+        if(!objMatches) throw new Error('JSON parse failed and no fallback objects found. Raw (first 300 chars): '+rawText.substring(0,300));
+        parsedArr=objMatches.map(function(m){return JSON.parse(m);});
+      }
+      parsedArr.forEach(function(parsed){
+        var idx=(parsed.index||1)-1;
+        var c=batch[idx];
+        if(!c) return;
+        c.scores=parsed.scores||c.scores;
+        c.strengths=parsed.strengths||c.strengths;
+        c.improvements=parsed.improvements||c.improvements;
+        c.rescored=true;
+        done++;
+      });
+      if(parsedArr.length<batch.length){
+        errors.push('Batch '+(Math.floor(b/BATCH_SIZE)+1)+': only '+parsedArr.length+'/'+batch.length+' results parsed');
+      }
+    }catch(err){
+      console.warn('Batch re-score failed for batch starting at',b,err,'Raw response:',rawText);
+      errors.push('Batch '+(Math.floor(b/BATCH_SIZE)+1)+' (clients: '+batch.map(function(c){return c.client;}).join(', ')+'): '+err.message);
+      failed+=batch.length;
+    }
+    saveCalls(allCalls);
+  }
+  if(errors.length){
+    prog.style.background='#A32D2D';
+    prog.style.maxWidth='420px';
+    prog.style.whiteSpace='pre-wrap';
+    prog.innerHTML='Done with errors: '+done+' re-scored, '+failed+' failed.<br><br>'+errors.join('<br><br>')+'<br><br><span style="text-decoration:underline;cursor:pointer" onclick="this.parentElement.remove();renderDashboard()">Dismiss</span>';
+  } else {
+    prog.textContent='Done! '+done+' re-scored, 0 failed.';
+    setTimeout(function(){if(prog.parentNode)prog.parentNode.removeChild(prog);renderDashboard();},4000);
+  }
+}
+
+async function exportData(){
+  var json=JSON.stringify(loadCalls(),null,2);
+  var name='sales-calls-'+new Date().toISOString().substring(0,10)+'.json';
+  try{
+    var dl=(window.claude&&window.claude.use)?await claude.use('downloads'):null;
+    if(dl){await dl.save({filename:name,data:json});return;}
+  }catch(e){if(e&&e.code&&e.code!=='unavailable'){return;}}
+  try{
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob([json],{type:'application/json'}));
+    a.download=name; a.click();
+  }catch(e){uiAlert('Export is not available here.');}
+}
+function importData(e){
+  var file=e.target.files[0];
+  if(!file) return;
+  document.getElementById('import-input').value='';
+  var reader=new FileReader();
+  reader.onload=function(ev){
+    var imported,merged;
+    try{
+      imported=JSON.parse(ev.target.result);
+      if(!Array.isArray(imported)) throw new Error('Invalid format');
+      var existing=loadCalls();
+      var importMap={};
+      imported.forEach(function(c){importMap[c.id]=c;});
+      var updatedIds=new Set();
+      merged=existing.map(function(c){
+        if(importMap[c.id]){
+          updatedIds.add(c.id);
+          var imp=importMap[c.id];
+          var rec=Object.assign({},c,imp);
+          if(imp.strengths&&imp.strengths.length) rec.strengths=imp.strengths;
+          if(imp.improvements&&imp.improvements.length) rec.improvements=imp.improvements;
+          if(imp.transcript) rec.transcript=imp.transcript;
+          return rec;
+        }
+        return c;
+      });
+      imported.forEach(function(c){
+        if(!updatedIds.has(c.id)) merged.push(c);
+      });
+      merged.sort(function(a,b){return new Date(b.timestamp)-new Date(a.timestamp);});
+      saveCalls(merged);
+      uiAlert('Imported '+imported.length+' calls successfully.');
+      renderDashboard();
+    }catch(err){
+      uiAlert('Import failed: '+err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+async function clearAll(){
+  if(await uiConfirm('Delete all saved calls and bonuses? This cannot be undone — export a backup first if unsure.')){saveCalls([]);saveAdjustments([]);renderDashboard();}
+}
+</script>
+</body>
+</html>
