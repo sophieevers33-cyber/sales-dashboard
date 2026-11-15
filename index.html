@@ -734,6 +734,7 @@ async function anthropicFetch(url,opts){
 
 
 // HELPERS
+function isClosed(c){return (c.outcome||'').toLowerCase()==='closed'||(c.cashCollected||0)>0;}
 function cls(v){return v>=7.5?'hi':v>=5?'md':'lo';}
 function setStatus(id,msg,type){var el=document.getElementById(id);if(!el)return;el.textContent=msg;el.className='status'+(type?' '+type:'');}
 function totalScore(s){if(!s)return 0;return Math.round(SCORE_KEYS.reduce(function(a,k){return a+(s[k]||0);},0)*10)/10;}
@@ -891,6 +892,7 @@ function saveCall(){
   var cash=parseFloat(document.getElementById('r-cash').value)||0;
   var rev=parseFloat(document.getElementById('r-revenue').value)||0;
   var inst=parseInt(document.getElementById('r-installments').value)||0;
+  if(cash>0) oc='closed';
   if(oc==='closed'&&inst<1) inst=1;
   if(rev<cash) rev=cash;
   currentResult.outcome=oc; currentResult.cashCollected=cash; currentResult.generatedRevenue=rev; currentResult.installments=inst;
@@ -1048,13 +1050,13 @@ function renderDashboard(){
   var rangeStart=fd1||'0000-00-00';
   var rangeEnd=fd2||'9999-99-99';
 
-  var closed=calls.filter(function(c){return (c.outcome||'').toLowerCase()==='closed';});
+  var closed=calls.filter(isClosed);
   var taken=calls.filter(function(c){return c.callType!=='no_show';});
   var pitchedAll=calls.filter(function(c){return c.callType==='pitched'||c.callType==='fdq';});
   var pitchedOnly=calls.filter(function(c){return c.callType==='pitched';});
   var fdqCalls=calls.filter(function(c){return c.callType==='fdq';});
 
-  var allClosed=loadCalls().filter(function(c){return (c.outcome||'').toLowerCase()==='closed';});
+  var allClosed=loadCalls().filter(isClosed);
   var fa=document.getElementById('f-account')?document.getElementById('f-account').value:'';
   var noDateFilter=!fd1&&!fd2;
   var cashPeriod=0,cashPassive=0,commPeriod=0,totalGenerated=0;
@@ -1551,6 +1553,7 @@ function updateCall(){
   var newInst=parseInt(document.getElementById('m-installments').value)||1;
   var refundAmt=parseFloat(document.getElementById('m-refund').value)||0;
   var newCommRaw=document.getElementById('m-comm').value;
+  if(newCash>0) newOutcome='closed';
   c.outcome=newOutcome;
   if(newCallDate) c.timestamp=newCallDate+'T12:00:00.000Z';
   if(dateClosed){c.dateClosed=dateClosed;if(newOutcome==='closed'&&!newCallDate) c.timestamp=dateClosed+'T12:00:00.000Z';}
