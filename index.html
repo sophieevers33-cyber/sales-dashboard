@@ -438,6 +438,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div class="field"><label>Refund</label><div class="prefix-wrap"><span class="prefix">$</span><input type="number" id="m-refund" placeholder="0" min="0"/></div></div>
       <div class="field"><label>Commission %</label><input type="number" id="m-comm" placeholder="10" min="0" step="0.001"/><span style="font-size:11px;color:var(--muted)">Overrides the rate on this call only</span></div>
     </div>
+    <div class="field" style="margin-bottom:8px"><label>Fathom link</label><input type="url" id="m-fathom-url" placeholder="https://fathom.video/share/..."/></div>
+    <div class="field" style="margin-bottom:8px"><label>Transcript</label><textarea id="m-transcript-edit" style="min-height:120px" placeholder="Paste the call transcript here, save, then click 'Re-analyze with current rubric' above to score it."></textarea></div>
     <button class="btn-save" style="margin-bottom:8px" onclick="updateCall()">Save updates</button>
     <div class="status" id="m-status"></div>
     <button class="btn-sm btn-danger" onclick="deleteCall()">Delete this call</button>
@@ -1045,7 +1047,7 @@ async function deleteAdjustment(id){
 function renderDashboard(){
   var callsAll=getFiltered();
   var calls=callsAll;
-  var scored=callsAll.filter(function(c){return c.source!=='sheet';}); // imported past closes have no scores
+  var scored=callsAll.filter(function(c){return c.source!=='sheet'||(c.transcript&&c.transcript.length>50);}); // imported past closes have no scores
   var todayISO=new Date().toISOString().substring(0,10);
   var fd1=document.getElementById('f-date-from')?document.getElementById('f-date-from').value:'';
   var fd2=document.getElementById('f-date-to')?document.getElementById('f-date-to').value:'';
@@ -1250,7 +1252,7 @@ function renderDashboard(){
         +'<td style="color:var(--muted);white-space:nowrap">'+dt+'</td>'
         +'<td style="font-weight:500">'+c.account+'</td>'
         +'<td>'+(c.client||'—')+(passiveIds.has(c.id)?' <span style="font-size:10px;background:#f3f0ff;color:var(--purple);padding:2px 6px;border-radius:4px;font-weight:600" title="Closed in an earlier month — installment due in this period">Installment</span>':'')+'</td>'
-        +'<td>'+(c.source==='sheet'?'<span style="font-size:11px;color:var(--muted)">From sheet</span>':'<span style="font-weight:600;color:'+sc+'">'+a+'/60</span>')+'</td>'
+        +'<td>'+((c.source==='sheet'&&!(c.transcript&&c.transcript.length>50))?'<span style="font-size:11px;color:var(--muted)">From sheet</span>':'<span style="font-weight:600;color:'+sc+'">'+a+'/60</span>')+'</td>'
         +'<td>'+fmtMoney(c.cashCollected)+'</td>'
         +'<td>'+fmtMoney(c.generatedRevenue)+'</td>'
         +'<td style="color:var(--success);font-weight:500">'+(comm2?'$'+Math.round(comm2).toLocaleString():'—')+'</td>'
@@ -1485,6 +1487,8 @@ function openModal(id){
   document.getElementById('m-installments').value=c.installments||'';
   document.getElementById('m-refund').value=c.refund||'';
   document.getElementById('m-comm').value=(c.comm||c.comm===0)?c.comm:'';
+  document.getElementById('m-fathom-url').value=(c.fathom&&c.fathom.url)||'';
+  document.getElementById('m-transcript-edit').value=c.transcript||'';
   document.getElementById('m-status').textContent='';
   document.getElementById('modal').classList.add('open');
 }
@@ -1516,7 +1520,7 @@ async function reanalyzeCall(){
   var isNoPitch=c.callType==='not_pitched'||c.callType==='no_show';
   var system='You are an expert sales coach. Return ONLY valid JSON, no markdown, no comments. Inside text values never use double quote characters (use single quotes instead).\n\n{\n  "scores":{"call_control":<0-10>,"discovery_depth":<0-10>,"belief_shifting":<0-10>,"objection_handling":<0-10>,"pitch_effectiveness":<0-10>,"closing_strength":<0-10>,"eq_in_closing":<0-10>},\n  "strengths":["<strength1>","<strength2>","<strength3>"],\n  "improvements":["<improvement1>","<improvement2>","<improvement3>"]\n}\n\n'+(isNoPitch?'No pitch was made. Score accordingly.\n\n':'');
   var callContent=c.transcript&&c.transcript.length>50
-    ?'Transcript:\n'+c.transcript.substring(0,8000)
+    ?'Transcript:\n'+c.transcript.substring(0,100000)
     :'Call data:\nClient: '+(c.client||'')+'\nOutcome: '+(c.outcome||'')+'\nCall type: '+(c.callType||'')+'\nStrengths: '+(c.strengths||[]).join('; ')+'\nImprovements: '+(c.improvements||[]).join('; ');
   try{
     var resp=await anthropicFetch('https://api.anthropic.com/v1/messages',{
@@ -1572,9 +1576,14 @@ function updateCall(){
       c.program='manual'; // rate no longer matches a preset tier, so drop the old program tag
     }
   }
+  var fUrl=document.getElementById('m-fathom-url').value.trim();
+  if(fUrl){c.fathom=Object.assign({title:'',date:'',attendees:''},c.fathom||{},{url:fUrl});} else {c.fathom=null;}
+  var tr=document.getElementById('m-transcript-edit').value.trim();
+  if(tr!==(c.transcript||'')){c.transcript=tr;}
   saveCalls(calls);
-  setStatus('m-status','Updated ✓','success');
   renderDashboard();
+  openModal(c.id);
+  setStatus('m-status','Updated ✓'+(tr&&tr.length>50?' — click "Re-analyze with current rubric" above to score this transcript.':''),'success');
 }
 
 async function deleteCall(){
