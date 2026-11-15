@@ -1043,7 +1043,8 @@ async function deleteAdjustment(id){
 }
 
 function renderDashboard(){
-  var calls=getFiltered();
+  var callsAll=getFiltered();
+  var calls=callsAll.filter(function(c){return c.source!=='sheet';}); // imported past closes have no call data
   var todayISO=new Date().toISOString().substring(0,10);
   var fd1=document.getElementById('f-date-from')?document.getElementById('f-date-from').value:'';
   var fd2=document.getElementById('f-date-to')?document.getElementById('f-date-to').value:'';
@@ -1189,6 +1190,7 @@ function renderDashboard(){
   }
 
   // Table
+  calls=callsAll;
   var list=document.getElementById('calls-list');
   var passiveIds=new Set();
   if(!noDateFilter){
@@ -1247,7 +1249,7 @@ function renderDashboard(){
         +'<td style="color:var(--muted);white-space:nowrap">'+dt+'</td>'
         +'<td style="font-weight:500">'+c.account+'</td>'
         +'<td>'+(c.client||'—')+(passiveIds.has(c.id)?' <span style="font-size:10px;background:#f3f0ff;color:var(--purple);padding:2px 6px;border-radius:4px;font-weight:600" title="Closed in an earlier month — installment due in this period">Installment</span>':'')+'</td>'
-        +'<td><span style="font-weight:600;color:'+sc+'">'+a+'/60</span></td>'
+        +'<td>'+(c.source==='sheet'?'<span style="font-size:11px;color:var(--muted)">From sheet</span>':'<span style="font-weight:600;color:'+sc+'">'+a+'/60</span>')+'</td>'
         +'<td>'+fmtMoney(c.cashCollected)+'</td>'
         +'<td>'+fmtMoney(c.generatedRevenue)+'</td>'
         +'<td style="color:var(--success);font-weight:500">'+(comm2?'$'+Math.round(comm2).toLocaleString():'—')+'</td>'
@@ -1280,7 +1282,7 @@ function renderDashboard(){
   ];
   var objCounts={};
   objPatterns.forEach(function(p){objCounts[p.label]=0;});
-  var filteredCalls=getFiltered();
+  var filteredCalls=getFiltered().filter(function(c){return c.source!=='sheet';});
   filteredCalls.forEach(function(c){
     var text=((c.transcript||'')+' '+(c.improvements||[]).join(' ')+' '+(c.strengths||[]).join(' ')).toLowerCase();
     objPatterns.forEach(function(p){
