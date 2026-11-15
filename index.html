@@ -1044,7 +1044,8 @@ async function deleteAdjustment(id){
 
 function renderDashboard(){
   var callsAll=getFiltered();
-  var calls=callsAll.filter(function(c){return c.source!=='sheet';}); // imported past closes have no call data
+  var calls=callsAll;
+  var scored=callsAll.filter(function(c){return c.source!=='sheet';}); // imported past closes have no scores
   var todayISO=new Date().toISOString().substring(0,10);
   var fd1=document.getElementById('f-date-from')?document.getElementById('f-date-from').value:'';
   var fd2=document.getElementById('f-date-to')?document.getElementById('f-date-to').value:'';
@@ -1176,14 +1177,14 @@ function renderDashboard(){
 
   // Aggregate scores
   var aggEl=document.getElementById('agg-section');
-  if(calls.length){
+  if(scored.length){
     aggEl.style.display='block';
     var avgScores={};
-    SCORE_KEYS.forEach(function(k){avgScores[k]=Math.round(calls.reduce(function(s,c){return s+((c.scores&&c.scores[k])||0);},0)/calls.length*10)/10;});
-    avgScores[EQ_KEY]=Math.round(calls.reduce(function(s,c){return s+((c.scores&&c.scores[EQ_KEY])||0);},0)/calls.length*10)/10;
+    SCORE_KEYS.forEach(function(k){avgScores[k]=Math.round(scored.reduce(function(s,c){return s+((c.scores&&c.scores[k])||0);},0)/scored.length*10)/10;});
+    avgScores[EQ_KEY]=Math.round(scored.reduce(function(s,c){return s+((c.scores&&c.scores[EQ_KEY])||0);},0)/scored.length*10)/10;
     renderScoreGrid('agg-scores',avgScores);
     var avgPhases={};
-    PHASE_KEYS.forEach(function(k){avgPhases[k]=Math.round(calls.reduce(function(s,c){return s+((c.phases&&c.phases[k])||0);},0)/calls.length);});
+    PHASE_KEYS.forEach(function(k){avgPhases[k]=Math.round(scored.reduce(function(s,c){return s+((c.phases&&c.phases[k])||0);},0)/scored.length);});
     renderPhaseGrid('agg-phases',avgPhases,'min avg');
   }else{
     aggEl.style.display='none';
