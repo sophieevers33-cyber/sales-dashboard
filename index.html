@@ -214,6 +214,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="phase-grid" id="phase-grid"></div>
     <div class="section-title">Coaching feedback</div>
     <div class="feedback-box" id="feedback"></div>
+    <div class="section-title">Deal details — check before saving</div>
+    <div class="card" style="margin-bottom:1rem">
+      <div class="row2" style="grid-template-columns:repeat(4,1fr);margin-bottom:8px">
+        <div class="field"><label>Outcome</label>
+          <select id="r-outcome"><option value="closed">Closed</option><option value="no_close">No close</option><option value="follow_up">Follow up</option><option value="fdq">FDQ</option><option value="unknown">Unknown</option></select></div>
+        <div class="field"><label>Cash collected today</label><div class="prefix-wrap"><span class="prefix">$</span><input type="number" id="r-cash" min="0"/></div></div>
+        <div class="field"><label>Total contract value</label><div class="prefix-wrap"><span class="prefix">$</span><input type="number" id="r-revenue" min="0"/></div></div>
+        <div class="field"><label>Installments</label><input type="number" id="r-installments" min="0"/></div>
+      </div>
+      <p class="field-note">Filled in by the AI from the transcript — correct anything it got wrong. Example: $3,000 paid in 3 monthly payments = cash $1,000, contract $3,000, installments 3. Payments 2 and 3 then show up in the following months with your 10%.</p>
+    </div>
     <button class="btn-save" onclick="saveCall()">✓ Save to dashboard</button>
     <div class="status" id="save-status"></div>
   </div>
@@ -314,6 +325,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="card" id="recurring-section" style="display:none;margin-top:1rem">
     <div style="font-size:12px;font-weight:700;letter-spacing:.07em;color:var(--muted);margin-bottom:1rem">RECURRING PAYMENTS</div>
     <div id="recurring-list"></div>
+  </div>
+  <!-- Upcoming payments -->
+  <div class="card" id="upcoming-section" style="display:none;margin-top:1rem">
+    <div style="font-size:12px;font-weight:700;letter-spacing:.07em;color:var(--muted);margin-bottom:4px">UPCOMING PAYMENTS (FUTURE MONTHS)</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:1rem">Contracted revenue not collected yet, by the month it's due, and your 10% on it.</div>
+    <div id="upcoming-list"></div>
   </div>
   <!-- Manual bonuses / adjustments -->
   <div class="card" id="adj-section" style="display:none;margin-top:1rem">
@@ -861,11 +878,22 @@ function renderResults(r){
   renderScoreGrid('score-grid',s);
   renderPhaseGrid('phase-grid',r.phases||{});
   renderFeedbackBox('feedback',r.strengths,r.improvements);
+  document.getElementById('r-outcome').value=(r.outcome||'unknown').toLowerCase();
+  document.getElementById('r-cash').value=r.cashCollected||0;
+  document.getElementById('r-revenue').value=r.generatedRevenue||0;
+  document.getElementById('r-installments').value=r.installments||0;
   document.getElementById('results').style.display='block';
 }
 
 function saveCall(){
   if(!currentResult) return;
+  var oc=document.getElementById('r-outcome').value;
+  var cash=parseFloat(document.getElementById('r-cash').value)||0;
+  var rev=parseFloat(document.getElementById('r-revenue').value)||0;
+  var inst=parseInt(document.getElementById('r-installments').value)||0;
+  if(oc==='closed'&&inst<1) inst=1;
+  if(rev<cash) rev=cash;
+  currentResult.outcome=oc; currentResult.cashCollected=cash; currentResult.generatedRevenue=rev; currentResult.installments=inst;
   var calls=loadCalls();
   if(calls.find(function(c){return c.id===currentResult.id;})){setStatus('save-status','Already saved.','');return;}
   calls.unshift(currentResult);
@@ -1160,6 +1188,21 @@ function renderDashboard(){
 
   // Table
   var list=document.getElementById('calls-list');
+  var passiveIds=new Set();
+  if(!noDateFilter){
+    var shownIds=new Set(calls.map(function(c){return c.id;}));
+    var ftT=document.getElementById('f-type')?document.getElementById('f-type').value:'';
+    var fcT=document.getElementById('f-client')?document.getElementById('f-client').value.toLowerCase().trim():'';
+    allClosed.forEach(function(c){
+      if(shownIds.has(c.id)) return;
+      if(fa&&c.account!==fa) return;
+      if(ftT&&c.callType!==ftT) return;
+      if(fcT&&!(c.client||'').toLowerCase().includes(fcT)) return;
+      var due=projectInstallments(c).some(function(r){return !r.first&&r.date>=rangeStart&&r.date<=rangeEnd;});
+      if(due){passiveIds.add(c.id);}
+    });
+    if(passiveIds.size){calls=calls.concat(allClosed.filter(function(c){return passiveIds.has(c.id);}));}
+  }
   if(!calls.length){
     list.innerHTML='<div class="empty-state">No calls match your filters.</div>';
   } else {
@@ -1201,7 +1244,7 @@ function renderDashboard(){
         +'<td onclick="event.stopPropagation()"><input type="checkbox" '+checked+' onchange="toggleCallSelect('+c.id+',this.checked)"></td>'
         +'<td style="color:var(--muted);white-space:nowrap">'+dt+'</td>'
         +'<td style="font-weight:500">'+c.account+'</td>'
-        +'<td>'+(c.client||'—')+'</td>'
+        +'<td>'+(c.client||'—')+(passiveIds.has(c.id)?' <span style="font-size:10px;background:#f3f0ff;color:var(--purple);padding:2px 6px;border-radius:4px;font-weight:600" title="Closed in an earlier month — installment due in this period">Installment</span>':'')+'</td>'
         +'<td><span style="font-weight:600;color:'+sc+'">'+a+'/60</span></td>'
         +'<td>'+fmtMoney(c.cashCollected)+'</td>'
         +'<td>'+fmtMoney(c.generatedRevenue)+'</td>'
@@ -1338,6 +1381,28 @@ function renderDashboard(){
   }else{
     recurringEl.style.display='none';
   }
+
+  // Upcoming payments (future installments)
+  var upEl=document.getElementById('upcoming-section'), upList=document.getElementById('upcoming-list');
+  var byMonth={};
+  allClosed.forEach(function(c){
+    if(fa&&c.account!==fa) return;
+    projectInstallments(c).forEach(function(r){
+      if(r.first||r.date<=todayISO) return;
+      if(!byMonth[r.month]) byMonth[r.month]={cash:0,comm:0,items:[]};
+      byMonth[r.month].cash+=r.amount; byMonth[r.month].comm+=r.commission;
+      byMonth[r.month].items.push((c.client||'—')+' ('+c.account+')');
+    });
+  });
+  var months=Object.keys(byMonth).sort();
+  if(months.length){
+    upEl.style.display='block';
+    var uc=0,um=0;
+    upList.innerHTML='<table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.06em;border-bottom:1px solid var(--border-md)"><th style="text-align:left;padding:6px 8px">MONTH</th><th style="text-align:left;padding:6px 8px">FROM</th><th style="text-align:right;padding:6px 8px">CASH DUE</th><th style="text-align:right;padding:6px 8px">COMMISSION</th></tr></thead><tbody>'
+      +months.map(function(m){var b=byMonth[m];uc+=b.cash;um+=b.comm;
+        return '<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px;font-weight:600">'+new Date(m+'-15').toLocaleDateString('en-GB',{month:'short',year:'numeric'})+'</td><td style="padding:8px;color:var(--muted)">'+b.items.join(', ')+'</td><td style="padding:8px;text-align:right;font-weight:600">$'+Math.round(b.cash).toLocaleString()+'</td><td style="padding:8px;text-align:right;color:var(--success);font-weight:600">$'+Math.round(b.comm).toLocaleString()+'</td></tr>';}).join('')
+      +'</tbody><tfoot><tr style="border-top:2px solid var(--border-md);font-weight:700;background:var(--surface2)"><td colspan="2" style="padding:10px 8px;font-size:12px">TOTAL STILL TO COME</td><td style="padding:10px 8px;text-align:right">$'+Math.round(uc).toLocaleString()+'</td><td style="padding:10px 8px;text-align:right;color:var(--success)">$'+Math.round(um).toLocaleString()+'</td></tr></tfoot></table>';
+  } else { upEl.style.display='none'; }
 
   // Bonuses / manual adjustments
   var adjEl=document.getElementById('adj-section');
